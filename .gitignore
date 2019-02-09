@@ -1,0 +1,6 @@
+*.ipynb_checkpoints
+/scripts/.ipynb_checkpoints/
+*.pyc
+.Rproj.user
+*.Rhistory
+
