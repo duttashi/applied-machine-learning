@@ -80,7 +80,7 @@ While accuracy measures an algorithm's performance, it does not measure the corr
 - **Regularization** is a collection of techniques that can be used to prevent over-fitting. Regularization adds information to a problem, often in the form of a penalty against complexity, to a problem.Accordingly, regularization attempts to find the simplest model that explains the data.
 - **Hyper-parameters** are parameters of the model that are not learned automatically and must be set manually. They control the strength of the penalty.
 
-- Practical implementation of the above concepts. See this [notebook](https://github.com/duttashi/applied-machine-learning/blob/master/fundamentalof%20statistics/script-ML_basics.ipynb) 
+- Practical implementation of the above concepts. See this [notebook](https://github.com/duttashi/applied-machine-learning/blob/master/resources/script-ML_basics.ipynb) 
  
 
 ##### Model Evaluation method (for test set)
