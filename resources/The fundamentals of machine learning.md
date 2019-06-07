@@ -62,7 +62,32 @@ Conversely a model with high variance, will produce different errors for an inpu
 
 Example: It can be helpful to visualize bias and variance as darts thrown at a
 dartboard. Each dart is analogous to a prediction from a different dataset. A model with high bias but low variance will throw darts that are far from the bull's eye, but tightly clustered. A model with high bias and high variance will throw darts all over the board; the darts are far from the bull's eye and each other. A model with low bias and high variance will throw darts that are closer to the bull's eye, but poorly clustered. Finally, a model with low bias and low variance will throw darts that are tightly clustered around the bull's eye. Therefore, **An ideal model must have low bias and low variance**. Ideally, a model will have both low bias and variance, but efforts to decrease one will
-frequently increase the other. This is known as the **bias-variance trade-off**.    
+frequently increase the other. This is known as the **bias-variance trade-off**.
+
+##### Trade-off in using accuracy as a performance measure
+
+While accuracy measures an algorithm's performance, it does not measure the correct classification or miss-classification. When the algorithm correctly classifies, the prediction is called **true positive** and when it incorrectly classifies, than the prediction is called, **false positive**. Other common measures of classification performance include, `precision` and `recall`.
+
+##### Some more terminologies
+
+- A **cost function, also called a loss function**, is used to define and measure the error of a model. 
+- The differences between the predicted values by the model and the observed values in the training set are called **residuals or training errors**. 
+- The differences between the predicted and observed values in the test data are called **prediction errors or test errors**.
+- by minimizing the sum of residuals, we can predict the best prediction. This measure of model's fitness is called the **residual sum of squares** cost function. 
+- **Variance** is a measure of how far a set of values is spread out. If all of the numbers in the set are equal, the variance of the set is zero. A small variance indicates that the numbers are near the mean of the set, while a set containing numbers that are far from the mean and each other will have a large variance. In python, `NumPy also provides the var method to calculate variance`.
+- **Co-variance** is a measure of how much two variables change together. If the value of the variables increase together, their co-variance is positive. If one variable tends to increase while the other decreases, their co-variance is negative. If there is no linear relationship between the two variables, their co-variance will be equal to zero; the variables are linearly uncorrelated but not necessarily independent. 
+- **Over-fitting** - when the model fits perfectly on training data but fails to fit on the test data or performs poorly on the test data.
+- **Regularization** is a collection of techniques that can be used to prevent over-fitting. Regularization adds information to a problem, often in the form of a penalty against complexity, to a problem.Accordingly, regularization attempts to find the simplest model that explains the data.
+- **Hyper-parameters** are parameters of the model that are not learned automatically and must be set manually. They control the strength of the penalty.
+
+- Practical implementation of the above concepts. See this [notebook](https://github.com/duttashi/applied-machine-learning/blob/master/fundamentalof%20statistics/script-ML_basics.ipynb) 
+ 
+
+##### Model Evaluation method (for test set)
+
+- **R-squared** measures how well the observed values of the response variables are predicted by the model. An r-squared score of one indicates that the response
+variable can be predicted without any error using the model. An r-squared score of one half indicates that half of the variance in the response variable can be predicted using the model. There are several methods to calculate r-squared. In python, to calculate r-squared, use the `score()` in `scikit-learn` library. 
+     
 
 - ***Supervised learning performance measure metrics***
 
