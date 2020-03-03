@@ -9,9 +9,13 @@
 ### discrete vars: university rating, research
 ### university rating (out of 5): 1=low rating, 5= highest rating
 
+# Reference: http://r-statistics.co/Linear-Regression.html
 
 # required libraries
 library(tidyverse)
+library(caret)
+library(corrplot)
+
 
 # read data in memory
 dat<- read.csv("data/Admission_Predict.csv",
@@ -30,8 +34,10 @@ for( i in 1:ncol(dat)){
 ## 1. change variable names
 colnames(dat)
 dat<- dat %>%
-  rename(gre_score = gre.score, toefl_score = toefl.score,
-         univ_rating = university.rating, admit = chance.of.admit
+  rename(gre_score = gre.score, 
+         toefl_score = toefl.score,
+         univ_rating = university.rating, 
+         admit = chance.of.admit
          )
 ## 2. change data type 
 # discrete vars: university rating, research. Change datatype to factor
@@ -87,3 +93,62 @@ p + geom_bar(aes(fill=admit), position = "dodge")+
   ggtitle("(A) University rating vs Admission ")+
   scale_x_discrete(name="university rating")+
   scale_y_continuous(name = "admission count")
+
+###### dimensionality reduction
+# check for near zero variance cols and remove them
+badCols<- nearZeroVar(df) # none
+# check for collinearity
+str(df)
+corr1<- cor(df[,c(2:3,5:7,9)])
+corrplot(corr1, method = "circle")
+# remove variables with more than 75% correlation
+hc <- findCorrelation(corr1, cutoff = 0.75)
+hc<- sort(hc)
+names(df[,hc]) # gre_score, sop and lor are highly correlated
+df_reduced<- df[, -hc]
+names(df_reduced)
+
+##### PREDICTIVE MODELLING
+
+# simple multiple linear regression model to predict the rate of student admission
+admit_lm<- lm(admit~., data = train_data)
+admit_rr<- train(admit~., data = train_data, method="ridge") # ridge regression
+admit_lasso<- train(admit~., data = train_data, method="lasso") # lasso regression
+
+predictions<- predict(admit_lm, data=test_data)
+# Model performance
+# (a) Compute the prediction error (RMSE)
+summary(admit_lm) # variables lor, gre_score, tofel_score and cgpa are significant
+# lets build another regression model only on variables lor, gre_score, tofel_score and cgpa
+admit_lm_1<- lm(admit~lor+cgpa+gre_score+toefl_score, data = train_data)
+summary(admit_lm_1)
+# prediction on the revised model
+predictions<- predict(admit_lm_1, data=test_data)
+
+# (b) Calculate the prediction accuracy and error rates
+actuals_preds <- data.frame(cbind(actuals=test_data$admit, predicteds=predictions))  # make actuals_predicteds dataframe.
+correlation_accuracy <- cor(actuals_preds)  
+correlation_accuracy # -0.057%
+head(actuals_preds)
+min_max_accuracy <- mean(apply(actuals_preds, 1, min) / apply(actuals_preds, 1, max))  
+# 80%, min-max accuracy
+mape <- mean(abs((actuals_preds$predicteds - actuals_preds$actuals))/actuals_preds$actuals) 
+# 23% mean absolute precentage deviation
+predictions<- predict(admit_lm_1, data=test_data)
+
+
+# define training control
+train_control <- trainControl(method="repeatedcv", number=10, repeats=3)
+
+
+# split data into train and test by cross validation
+set.seed(2020)
+index <- createDataPartition(df$admit, p = 0.7, list = FALSE)
+train_data <- df[index, ]
+test_data  <- df[-index, ]
+ctrl <- trainControl(method = "repeatedcv"
+                     , number = 10, repeats = 10
+                     , verboseIter = FALSE
+                     , classProbs=TRUE, 
+                     summaryFunction=twoClassSummary
+)
