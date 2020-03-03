@@ -37,6 +37,15 @@ season_goals<- season_goals %>%
   separate(season, c("season_start_year","season_end_year"),sep = "-")
 season_goals<- season_goals %>%
   separate(years, c("year_start","year_end"), sep = "-")
+# replace values greater than 70 in year_end with 19 followed by value
+season_goals<- season_goals %>%
+  mutate(year_end = case_when(year_end>=70 ~ paste0("19", year_end),
+                              year_end<=20 ~ paste0("20", year_end),
+                              TRUE ~ year_end))
+season_goals<- season_goals %>%
+  mutate(season_end_year = case_when(season_end_year>=70 ~ paste0("19", season_end_year),
+                                     season_end_year<=20 ~ paste0("20", season_end_year),
+                              TRUE ~ season_end_year))
 # drop yr_start, headshot
 season_goals$yr_start<- NULL
 season_goals$headshot<- NULL
@@ -67,3 +76,31 @@ write.csv(top_250, file = "data/top_250_goals.csv")
 # find common cols between data frames
 intersect(colnames(game_goals), colnames(season_goals))
 
+# join the data frames
+x.dat<- full_join(season_goals, top_250)
+df<- full_join(x.dat, game_goals)
+# remove the temporary data frames
+rm(x.dat)
+
+# write merged data to disk
+write.csv(df, file = "data/merged_games_data.csv")
+
+# EDA
+str(df)
+colSums(is.na(df))
+
+# dimensionality reduction
+# 1. Remove cols with more than 80% missing data
+# approach #1
+df_reduced<- df[ lapply( df, function(x) sum(is.na(x)) / length(x) ) >= 0.80 ]
+df_reduced$player<- df$player # add the play column back to the reduced dataframe
+# approach #2
+#df_reduced<- df[,colMeans(is.na(df))>= 0.80]
+colSums(is.na(df_reduced))
+str(df_reduced)
+
+# EDA
+# coerce all character cols to factor
+df_reduced[sapply(df_reduced, is.character)]<- lapply(df_reduced[sapply(df_reduced, is.character)],
+                                                      as.factor)
+str(df_reduced)
