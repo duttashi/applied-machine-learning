@@ -98,9 +98,52 @@ df_reduced$player<- df$player # add the play column back to the reduced datafram
 #df_reduced<- df[,colMeans(is.na(df))>= 0.80]
 colSums(is.na(df_reduced))
 str(df_reduced)
-
+# drop column "active' as it has same values in it as the column status
+df_reduced$active<- NULL
 # EDA
 # coerce all character cols to factor
 df_reduced[sapply(df_reduced, is.character)]<- lapply(df_reduced[sapply(df_reduced, is.character)],
                                                       as.factor)
+# Visualizations
 str(df_reduced)
+
+df_reduced %>%
+  filter(!is.na(total_goals))%>%
+  #ggplot(aes(x=fct_reorder(active, total_goals), y=total_goals, color=hand))+
+  ggplot(aes(x=active))+
+  geom_bar()+
+  labs(x="active vs retired players", y="count")+
+  theme_bw()+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+# 1. Is there a relationship between total goals and active/retired player?
+df_reduced %>%
+  filter(!is.na(total_goals))%>%
+  ggplot(aes(x=active, y=total_goals))+
+  geom_boxplot(outlier.colour = "red", na.rm = TRUE, position = "dodge")+
+  ggtitle("(a) Goal count ")+
+  labs(x="Players in/action", y="total goals")+
+  theme_bw()+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1))
+
+# plot total goals greater than 600
+colSums(is.na(df_reduced))
+
+df_reduced %>%
+  # select multiple columns
+  select(player,season_start_year, season_end_year, season_games, age,
+         status, total_goals,league,position)%>%
+  # filter on multiple columns based on condition
+  filter(!is.na(player) & !is.na(age) & !is.na(season_start_year) 
+         & !is.na(season_end_year) & !is.na(season_games) & !is.na(status)
+         & !is.na(total_goals) & !is.na(league) & !is.na(position)
+         ) %>%
+  ggplot(aes(x=age))+
+  geom_bar()+
+  #ggplot(aes(x=age, y=total_goals))+
+  #geom_boxplot(outlier.colour = "red", na.rm = TRUE, position = "dodge")+
+  facet_wrap(~position, scales = "free")+
+  ggtitle("(a) Player age and game position ")+
+  labs(x="Player age", y="count")+
+  theme_bw()+
+  theme(panel.border = element_rect(colour = "black", size=1))
