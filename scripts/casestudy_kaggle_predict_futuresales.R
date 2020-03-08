@@ -2,7 +2,7 @@
 # evaluation metric- RMSE
 # data source: https://www.kaggle.com/c/competitive-data-science-predict-future-sales
 
-# reference script: https://www.kaggle.com/jeetranjeet619/predict-future-sales-r
+
 
 # sales data for year 2020 only
 # load required libraries
