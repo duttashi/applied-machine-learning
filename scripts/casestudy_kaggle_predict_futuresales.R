@@ -46,9 +46,12 @@ write.csv(submission, file = "data/kaggle_predict_futuresales_sub1.csv", row.nam
 df_train$date<- as.Date(df_train$date, format = "%d.%m.%y")
 df<- df_train
 # split into 3 cols
+library(lubridate)
 df$year <- year(ymd(df$date))
 df$month <- month(ymd(df$date)) 
 df$day <- day(ymd(df$date))
+
+
 # drop the original date col
 df$date<- NULL
 table(df$year) # drop the col as it got zero variance

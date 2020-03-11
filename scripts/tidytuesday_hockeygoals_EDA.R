@@ -138,15 +138,13 @@ df %>%
   #geom_area(stat = "bin", binwidth=200)
   #geom_area(aes(y=..density..),stat = "bin",binwidth=200)
   #geom_smooth(method = "lm", se=FALSE)
-  geom_density(aes(fill=status),na.rm = TRUE, show.legend = TRUE)
+  geom_density(aes(fill=status),na.rm = TRUE, show.legend = TRUE)+
+  theme_bw()
 # Deviation; diverging bars, area chart
 
 # Ranking: ordered bar chart
 
 # Distribution: histogram, boxplot, density plot, dot+box plot, 
-
-
-
 
 df %>%
   group_by(total_goals)%>%
@@ -207,11 +205,27 @@ str(df)
 # # drop column "active' as it has same values in it as the column status
 # df_reduced$active<- NULL
 
-library(VIM)
-aggr(df_reduced, col=c('navyblue','yellow'),
-     numbers=TRUE, sortVars=TRUE,
-     labels=names(df_reduced), cex.axis=.7,
-     gap=3, ylab=c("Missing data","Pattern"))
+# library(VIM)
+# aggr(df_reduced, col=c('navyblue','yellow'),
+#      numbers=TRUE, sortVars=TRUE,
+#      labels=names(df_reduced), cex.axis=.7,
+#      gap=3, ylab=c("Missing data","Pattern"))
+
+df_cmplt<- df %>%
+  drop_na()
 
 
-# 1. Is there a relationship between total goals and active/retired player?
+# 1. Relationship between player age and total goals
+str(df)
+table(df$outcome)
+
+df %>%
+  group_by(age, total_goals, outcome) %>%
+  filter(!is.na(total_goals))%>%
+  filter(!is.na(points))%>%
+  #filter(!is.na(outcome))%>%
+  ggplot(aes(x=total_goals, y=points))+
+  #geom_boxplot(outlier.colour = "red", na.rm = TRUE, alpha=0.2)+
+  geom_point()+
+  #geom_line()+
+  theme_bw()
