@@ -8,3 +8,4 @@
 *.pycache
 *.idea
 /data/
+/.idea
