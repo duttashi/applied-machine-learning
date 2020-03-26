@@ -22,7 +22,7 @@ names(data_test)
 data_train <- data_train %>%
   mutate(type='train')
 data_test<- data_test %>%
-  mutate(ConfirmedCases = NA, Fatalities = NA, type = 'test')  %>% 
+  mutate(ConfirmedCases = 0, Fatalities = 0, type = 'test')  %>% 
   rename(Id = ForecastId)
 
 # combine the train & test data together
@@ -32,12 +32,6 @@ rm(data_train)
 rm(data_test)
 
 # Data cleaning for combined data
-# coerce multiple character vars to factor
-# covid_data<- covid_data %>%
-#   mutate_if(is.character, funs(factor(.)))
-# replace empty factor levels with NA
-# find_empty_level<- which(levels(covid_data$Province.State)=="")
-# levels(covid_data$Province.State)[find_empty_level]<-"NA"
 # convert date from categorical to Date format
 covid_data$Date <- as.Date(covid_data$Date, format = "%Y-%m-%d")
 # separate date into year, month, day format
@@ -48,8 +42,7 @@ covid_data$Year<- as.integer(covid_data$Year)
 covid_data$Month<- as.integer(covid_data$Month)
 covid_data$Day<- as.integer(covid_data$Day)
 
-sum(is.na(covid_data)) # missing values
-colSums(is.na(covid_data))
+sum(is.na(covid_data)) # 0 missing values
 
 # Supervised Feature selection
 table(covid_data$Year) # year is constant
@@ -78,24 +71,12 @@ covid.test <- covid_data  %>%
   filter(type == 'test')
 
 # drop vars from covid.test & covid.train
-covid.test$ConfirmedCases<- NULL
-covid.test$Fatalities<- NULL
 covid.train$type<- NULL
 covid.test$type<- NULL
-
-str(covid.train)
-str(covid.test)
-table(covid.train$Year) # constant value, drop it
-table(covid.test$Year) # constant value, drop it
-
-covid.train$Year<- NULL
-covid.test$Year<- NULL
-
-sum(is.na(covid.train))
-sum(is.na(covid.test))
+covid.train$Year<- NULL # constant value, drop it
+covid.test$Year<- NULL # constant value, drop it
 
 # dummy encode the factor vars to numeric
-
 for (f in names(covid.train)) {
   if (class(covid.train[[f]])=="character") {
     levels <- unique(c(covid.train[[f]], covid.test[[f]]))
@@ -103,21 +84,6 @@ for (f in names(covid.train)) {
     covid.test[[f]]  <- as.integer(factor(covid.test[[f]],  levels=levels))
   }
 }
-
-# XGBoost
-library(xgboost)
-str(covid.train)
-# tune and run the model for ConfirmedCases
-model_xbg<- xgboost(data = covid.train, 
-        booster = "gblinear", 
-        objective = "binary:logistic", 
-        max.depth = 5, 
-        nround = 2, 
-        lambda = 0, 
-        lambda_bias = 0, 
-        alpha = 0
-        )
-
 
 # create caret trainControl object to control the number of cross-validations performed
 ctrl <- trainControl(method = "repeatedcv"
@@ -136,16 +102,23 @@ print(importance) # Fatalities, Long, Lat, Id, Month, Year, Province.State, Coun
 plot(importance)
 
 ## Predictive modeling for confirmed cases
-# Run algorithms using 3-fold cross validation
+# Model 1: Predicting ConfirmedCases
+# Outcome variable: ConfirmedCases
+# Features:
+#   - Province.State
+# - Country.Region
+# - Lat
+# - Long
+# - Day
+
 set.seed(2020)
-
 # Build models
-
 # CART
-fit_cart<-train(ConfirmedCases ~ Province.State+Country.Region+Lat+Long+Month+Day,data = covid.train,
-                       method = "rpart",
-                       preProcess = c("scale", "center"),
-                       trControl = ctrl
+fit_cart<-train(ConfirmedCases ~ Fatalities+Country.Region+Lat+Long+Month+Day,
+                data = covid.train,
+                method = "rpart",
+                preProcess = c("scale", "center"),
+                trControl = ctrl
                 )
 # Make Predictions
 #Training set predictions:
@@ -154,25 +127,74 @@ table(covid.train$Preds)
 # Evaluation: root-mean square logarithmic error on training data
 RMSLE_1 <- sqrt(mean((log(covid.train$Preds + 1) - 
                         log(covid.train$ConfirmedCases + 1))^2))
-RMSLE_1 # 4.16
+RMSLE_1 # 3.81
 
 #Test set predictions:
 covid.test$Preds <- predict(fit_cart, newdata = covid.test)
+table(covid.test$Preds)
 # Evaluation: root-mean square logarithmic error on training data
 RMSLE_2 <- sqrt(mean((log(covid.test$Preds + 1) - 
                         log(covid.test$ConfirmedCases + 1))^2))
-RMSLE_2 # NAN ?
+RMSLE_2 # 4.48
 
-# XGBoost
-# XGBoost only works with numeric vectors.
+# Model 2: Predicting Fatalities
+# Outcome variable: Fatalities
+# Features:
+#   - Province.State
+# - Country.Region
+# - Lat
+# - Long
+# - Day
+set.seed(2020)
+# Build models
+# CART
+fit_cart_1<-train(Fatalities~Country.Region+Lat+Long+Month+Day,
+                data = covid.train,
+                method = "rpart",
+                preProcess = c("scale", "center"),
+                trControl = ctrl
+                )
+# Make Predictions
+#Training set predictions:
+covid.train$Preds_1<- predict(fit_cart_1, newdata = covid.train)
+table(covid.train$Preds_1)
+# Evaluation: root-mean square logarithmic error on training data
+RMSLE_2 <- sqrt(mean((log(covid.train$Preds_1 + 1) - 
+                        log(covid.train$Fatalities + 1))^2))
+RMSLE_2 # 1.56
+
+#Test set predictions:
+covid.test$Preds_1 <- predict(fit_cart_1, newdata = covid.test)
+
+# create submission file
+submission <- covid.test %>%
+  select(Id, Preds, Preds_1)
+colnames(submission) <- c("ForecastId", "ConfirmedCases", "Fatalities")
+# write to disc
+write.csv(submission, file = "data/kaggle_covid19_submission_1.csv", row.names = FALSE)
+
+##### XGBOOST Model
+library(xgboost)
+
+# xgboost does not accept dataframe. So coerce dataframe to xgboost matrix
+target<- covid.train$ConfirmedCases
+data_train_xgb<- xgb.DMatrix(data=as.matrix(covid.train),label=target, missing=0)
+data_test_xgb <- xgb.DMatrix(data=as.matrix(covid.test), missing=0)
+
+# Set xgboost parameters. These are not necessarily the optimal parameters.
+# Further grid tuning is needed. 
 str(covid.train)
-feature.names <- names(covid.train)[2:ncol(covid.train)-1]
-
-cat("assuming text variables are categorical & replacing them with numeric ids\n")
-for (f in feature.names) {
-  if (class(covid.train[[f]])=="Factor") {
-    levels <- unique(c(covid.train[[f]], covid.test[[f]]))
-    covid.train[[f]] <- as.integer(factor(covid.train[[f]], levels=levels))
-    covid.test[[f]]  <- as.integer(factor(covid.test[[f]],  levels=levels))
-  }
-}
+y <- covid.train$ConfirmedCases
+xgb <- xgboost(data = data.matrix(covid.train[,-8]), 
+               label = y, 
+               eta = 0.1,
+               max_depth = 15, 
+               nround=25, 
+               subsample = 0.5,
+               colsample_bytree = 0.5,
+               eval_metric = "merror",
+               objective = "multi:softprob",
+               num_class = 12,
+               nthread = 3
+)
+covid.train$ConfirmedCases
