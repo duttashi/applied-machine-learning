@@ -33,7 +33,7 @@ This project uses the following IDE's and programming languages:
 - IDE is RStudio version - `1.1.463` 
 - R version - `3.6.1` 
 
-#### Python Package (or folder) and Module (or source file) Naming Conventions
+#### Python folder/file naming conventions
 
 This repository follows the [PEP 8](https://www.python.org/dev/peps/pep-0008/) standard for Python file and folder naming conventions.
 
@@ -48,8 +48,9 @@ This repository follows the [PEP 8](https://www.python.org/dev/peps/pep-0008/) s
 	- Python packages should also have short, all-lowercase names, although the use of underscores is discouraged. Example: `mypackage`
 	- Constant - Use an uppercase single letter, word, or words. Separate words with underscores to improve readability. Example: `MY_CONSTANT`
 	- Class - start each word with a capital letter. Do not separate words with underscores. This style is called camel case. Example: `MyClass`
+	- Every script will begin with a prefix of `aml_`. Followed by a distinct meaningful name, that describe the task the script is meant to perform.
 
-#### R Naming Conventions
+#### R folder/file naming conventions
 
 This repository follows the Hadley Wickham [R Style Guide](http://stat405.had.co.nz/r-style.html)
 
