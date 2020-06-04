@@ -3,7 +3,7 @@
 # Evaluation metric # Submissions are evaluated on Root-Mean-Squared-Error (RMSE) between the logarithm of the predicted value and the logarithm of the observed sales price. (Taking logs means that errors in predicting expensive houses and cheap houses will affect the result equally.)
 # Dependent variable # SalePrice
 # reference # https://archive.ics.uci.edu/ml/datasets/Real+estate+valuation+data+set#
-# reference data analysis: https://www.rpubs.com/sngan/517214
+
 
 # required libraries
 library(tidyverse)
