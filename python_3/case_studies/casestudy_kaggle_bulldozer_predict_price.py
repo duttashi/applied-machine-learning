@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Jun 27 20:54:51 2020
-https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-1-84a1dc2b5236
-
+Reference: https://medium.com/@hiromi_suenaga/machine-learning-1-lesson-1-84a1dc2b5236
+Data Source: https://www.kaggle.com/c/bluebook-for-bulldozers/data
 """
 # install required packages
 # pip install pandas-summary
@@ -32,7 +32,7 @@ print(os.getcwd())
 #print(os.listdir(DATA_PATH))
 
 # read the data 
-df_raw = pd.read_csv("../../../data/data_train_kaggle_bulldozers.csv", low_memory=False, parse_dates=["saledate"])
+df_raw = pd.read_csv("../../data/data_train_kaggle_bulldozers.csv", low_memory=False, parse_dates=["saledate"])
 
 #print(df_raw.head().transpose())
 
