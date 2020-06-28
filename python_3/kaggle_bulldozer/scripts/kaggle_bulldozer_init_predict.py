@@ -20,19 +20,19 @@ from fastai.tabular import *
 from fastai.structured import *
 from IPython.display import display
 
-DATA_PATH = "C:\\Users\\Ashoo\\Documents\\playground_r\\applied-machine-learning\\python_3\\kaggle_bulldozer\\"
+# DATA_PATH = "C:\\Users\\Ashoo\\Documents\\playground_r\\applied-machine-learning\\python_3\\kaggle_bulldozer\\"
 
-# print current work directory 
-#print(os.getcwd())
+# # print current work directory 
+print(os.getcwd())
 
-# set working directory
-os.chdir(DATA_PATH)
+# # set working directory
+# os.chdir(DATA_PATH)
 # print(os.getcwd())
 # print list of files in DATA_PATH
 #print(os.listdir(DATA_PATH))
 
 # read the data 
-df_raw = pd.read_csv("data//Train.csv", low_memory=False, parse_dates=["saledate"])
+df_raw = pd.read_csv("../../../data/data_train_kaggle_bulldozers.csv", low_memory=False, parse_dates=["saledate"])
 
 #print(df_raw.head().transpose())
 
@@ -59,11 +59,13 @@ def display_all(df):
         with pd.option_context("display.max_columns", 1000): 
             display(df)
 
+# Show the count of missing data in all columns
 display_all(df_raw.isnull().sum().sort_index()/len(df_raw))
 
+# Missig values treatment
 df, y, nas = proc_df(df_raw, 'SalePrice')
 
 # Build model
 m = RandomForestRegressor(n_jobs=-1)
 m.fit(df, y)
-print(m.score(df,y))
+print("Initial accuracy: ",m.score(df,y))
