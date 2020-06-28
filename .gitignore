@@ -7,4 +7,16 @@
 /data/2008.csv.bz2
 *.pycache
 .idea
+/data/*
+/data/*.csv
+/scripts_for_general_coding/*.csv
+/.spyproject/*/*
+/*.ini
+/*.pylint.d/
+/.pylint.d/*.stats
 
+*.ini.bak
+*.2.0.ini
+*.ini
+*.csv
+*.tgz
