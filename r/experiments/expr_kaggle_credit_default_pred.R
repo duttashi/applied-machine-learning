@@ -9,7 +9,8 @@
 rm(list = ls())
 
 # load required libraries
-library(tidyverse)
+library(readr)
+library(plyr) # for revalue()
 library(caret)
 library(mice)
 # load data
@@ -24,6 +25,16 @@ sum(is.na(train))
 sum(is.na(test))
 colnames(train)
 
+# EDA
+# coerce target variable to factor
+table(train$TARGET)
+train$TARGET<- factor(train$TARGET)
+str(table(train$TARGET))
+# recode target variable values
+# as per data dictionary, 0=paid loan, 1= not paid loan
+train$TARGET<- revalue(train$TARGET, c("0"="paid_loan",
+                                       "1"="not_paid_loan")
+                       )
 
 # FEATURE SELECTION
 
@@ -40,8 +51,9 @@ train<- train[,-badCols]
 # separate character and numeric cols apart
 charcols <- colnames(train[,sapply(train, is.character)])
 numcols <- colnames(train[, sapply(train, is.numeric)])
+factorcols <- colnames(train[, sapply(train, is.factor)])
 # rearrange cols such that numeric cols are first followed by character cols
-train<- train[,c(numcols,charcols)] # character cols begins from index 36
+train<- train[,c(numcols,charcols,factorcols)] # character cols begins from index 36
 
 # Impute missing values for numeric variables
 train<-data.frame(lapply(train,function(x) {
@@ -51,13 +63,15 @@ train$NAME_TYPE_SUITE<- NULL
 
 # 4. Find collinear features (works only for numeric features) as identified by a correlation coefficient greater than a specified value
 str(train)
-train_corr = cor(train[,c(1:35)])
+train_corr = cor(train[,c(1:34)])
 hc = findCorrelation(train_corr, cutoff=0.75) # find vars that are 75% correlated 
 hc = sort(hc)
 colnames(train[,hc])
 train = train[,-c(hc)]
 colSums(is.na(train))
 
+# write clearn train data to disk
+write.csv(train, file = "data/kag_hln_application_train_clean.csv")
 #################################
 
 # Model building on imbalanced dataset
@@ -73,33 +87,38 @@ ctrl <- trainControl(method = "repeatedcv"
                      summaryFunction=twoClassSummary
 )
 # Build models
-# CART
-set.seed(2020)
+# # CART
+# set.seed(2020)
+# 
+# fit_cart<-caret::train(TARGET ~ .,data = train_data,
+#                        method = "rpart",
+#                        preProcess = c("scale", "center"),
+#                        trControl = ctrl 
+#                        ,metric= "ROC"
+# )
+# # kNN
+# set.seed(2020)
+# 
+# fit_knn<-caret::train(TARGET ~ .,data = train_data,
+#                       method = "knn",
+#                       preProcess = c("scale", "center"),
+#                       trControl = ctrl 
+#                       , metric= "ROC")
+# 
+# # # Logistic Regression
+# # set.seed(2020)
+# # 
+# # fit_glm<-caret::train(TARGET ~ .,data = train_data
+# #                       , method = "glm", family = "binomial"
+# #                       , preProcess = c("scale", "center")
+# #                       , trControl = ctrl
+# #                       , metric= "ROC")
 
-fit_cart<-caret::train(TARGET ~ .,data = train_data,
-                       method = "rpart",
+# Support Vector Machine
+fit_svm<- caret::train(TARGET ~ .,data = train_data,
+                       method = "svmLinear",
                        preProcess = c("scale", "center"),
-                       trControl = ctrl 
-                       ,metric= "ROC"
-)
-# kNN
-set.seed(2020)
-
-fit_knn<-caret::train(TARGET ~ .,data = train_data,
-                      method = "knn",
-                      preProcess = c("scale", "center"),
-                      trControl = ctrl 
-                      , metric= "ROC"
-)
-
-# Logistic Regression
-set.seed(2020)
-fit_glm<-caret::train(TARGET ~ .,data = train_data
-                      , method = "glm", family = "binomial"
-                      , preProcess = c("scale", "center")
-                      , trControl = ctrl
-                      , metric= "ROC"
-)
+                       trControl = ctrl)
 # summarize accuracy of models
 models <- resamples(list(cart=fit_cart, knn=fit_knn, glm=fit_glm))
 summary(models)
