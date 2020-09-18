@@ -9,14 +9,9 @@
 rm(list = ls())
 
 # required libraries
-library(readr)
-library(dplyr)
-library(plyr)
-library(caret)
-library(magrittr)
-library(ggplot2)
+library(tidyverse)
 library(corrplot)
-
+library(caret)
 # load required data
 data_train<- read_csv("data/av_crossell_pred_train.csv",na=c("",NA))
 data_test<- read_csv("data/av_crossell_pred_test.csv",na=c("",NA))
@@ -24,48 +19,63 @@ data_test<- read_csv("data/av_crossell_pred_test.csv",na=c("",NA))
 # EDA
 sum(is.na(data_train)) # no missing vals
 
-# Data Manipulation
-# recode cateorical variables
-data_train$Gender<- revalue(data_train$Gender,c("Male"="1",
-                                                "Female"="2"))
-data_train$Vehicle_Age<- revalue(data_train$Vehicle_Age,c("< 1 Year"="1",
-                                                          "> 2 Years"="2",
-                                                          "1-2 Year"="3"))
-data_train$Vehicle_Damage<- revalue(data_train$Vehicle_Damage,c("Yes"="1",
-                                                                "No"="2"))
-data_train$Response<- factor(data_train$Response)
-data_train$Response<- revalue(data_train$Response,c("1"="interested",
-                                                    "0"="not_interested"))
-# write_csv(data_train, "data/av_crossell_pred_train_coded.csv")
+# lowercase all column names in the dataframe
+lowercase_cols<- function(df){
+  for (col in colnames(df)) {
+    colnames(df)[which(colnames(df)==col)] = tolower(col)
+  }
+  return(df)
+}
+
+# Coerce all character formats to Factors and recode to number format
+
+convert_many_character_vars_to_numeric<- function(df){
+  # I asked this Q on SO: https://stackoverflow.com/questions/63947875/how-to-elegantly-recode-multiple-columns-containing-multiple-values/63947908?noredirect=1#comment113080985_63947908
+  df1<- df %>% 
+    # Coerce all character formats to Factors
+    mutate(across(gender:vehicle_damage,~as.factor(.))) %>%
+    mutate(across(gender:vehicle_damage,~factor(.,levels = unique(.)))) %>%
+    # Coerce all factors to numeric
+    mutate(across(gender:vehicle_damage,~as.numeric(.)))
+  return(df1)
+}
+
+## Data manipulation
+data_train<- lowercase_cols(data_train)
+str(data_train)
+# rearrange the cols
+data_train<- data_train[,c(2,7:8,1,3:6,9:12)] 
+# convert factors to nominal format
+data_train<- convert_many_character_vars_to_numeric(data_train)
 
 # change data type as per data dictionary
-data_train$Driving_License<- as.character(data_train$Driving_License)
-data_train$Region_Code<- as.character(data_train$Region_Code)
-data_train$Previously_Insured<- as.character(data_train$Previously_Insured)
-data_train$Vehicle_Damage<- as.character(data_train$Vehicle_Damage)
-data_train$Policy_Sales_Channel<- as.character(data_train$Policy_Sales_Channel)
+data_train$gender<- as.factor(data_train$gender)
+data_train$driving_license<- as.factor(data_train$driving_license)
+data_train$region_code<- as.factor(data_train$region_code)
+data_train$previously_insured<- as.factor(data_train$previously_insured)
+data_train$vehicle_damage<- as.factor(data_train$vehicle_damage)
+data_train$policy_sales_channel<- as.factor(data_train$policy_sales_channel)
+data_train$response<- as.factor(data_train$response)
 
-# rearrange the vars
-data_train<- data_train[,c(1,3,9,11,2,4:8,10,12)]
+str(data_train)
 
 # Apply the same steps on test set
 # Data Manipulation
-# recode cateorical variables
-data_test$Gender<- revalue(data_test$Gender,c("Male"="1",
-                                                "Female"="2"))
-data_test$Vehicle_Age<- revalue(data_test$Vehicle_Age,c("< 1 Year"="1",
-                                                          "> 2 Years"="2",
-                                                          "1-2 Year"="3"))
-data_test$Vehicle_Damage<- revalue(data_test$Vehicle_Damage,c("Yes"="1",
-                                                                "No"="2"))
+data_test<- lowercase_cols(data_test)
+str(data_test)
+# rearrange the cols
+data_test<- data_test[,c(2,7:8,1,3:6,9:11)] 
+# convert factors to nominal format
+data_test<- convert_many_character_vars_to_numeric(data_test)
+str(data_test)
+
 # change data type as per data dictionary
-data_test$Driving_License<- as.character(data_test$Driving_License)
-data_test$Region_Code<- as.character(data_test$Region_Code)
-data_test$Previously_Insured<- as.character(data_test$Previously_Insured)
-data_test$Vehicle_Damage<- as.character(data_test$Vehicle_Damage)
-data_test$Policy_Sales_Channel<- as.character(data_test$Policy_Sales_Channel)
-# rearrange the vars
-data_test<- data_test[,c(1,3,9,11,2,4:8,10)]
+data_test$driving_license<- as.factor(data_test$driving_license)
+data_test$region_code<- as.factor(data_test$region_code)
+data_test$previously_insured<- as.factor(data_test$previously_insured)
+data_test$vehicle_damage<- as.factor(data_test$vehicle_damage)
+data_test$policy_sales_channel<- as.factor(data_test$policy_sales_channel)
+str(data_test)
 
 ## Check for multicollinearity
 # str(data_train)
@@ -79,7 +89,7 @@ dim(data_train_smp) # [1] 38111   12 use .01 for 3811
 
 # split the train dataset into train and test set
 set.seed(2020)
-index <- createDataPartition(data_train_smp$Response, p = 0.7, list = FALSE)
+index <- createDataPartition(data_train_smp$response, p = 0.7, list = FALSE)
 df_train <- data_train_smp[index, ]
 df_test  <- data_train_smp[-index, ]
 
@@ -177,7 +187,32 @@ fit_over_gbm<-caret::train(Response ~ .,data = df_train[,-c(1,11)],
                              trControl = ctrl
                              , metric= "ROC")
 
+library(Matrix)
+#prepare training and validation data
+trainm = sparse.model.matrix(response ~., data = df_train)
+train_label = df_train[,"response"]
 
+valm = sparse.model.matrix(response ~., data = df_test)
+val_label = df_test[,"response"]
+
+library(lightgbm)
+
+train_matrix = lgb.Dataset(data = as.matrix(trainm), label = train_label)
+val_matrix = lgb.Dataset(data = as.matrix(valm), label = val_label)
+
+# Training LightGBM Model
+valid = list(test = val_matrix)
+
+# model parameters
+params = list(max_bin = 5,
+              learning_rate = 0.001,
+              objective = "binary",
+              metric = 'binary_logloss')
+
+#model training
+bst = lightgbm(params = params, train_matrix, valid, nrounds = 100)
+
+ 
 # summarize accuracy of models
 models <- resamples(list(rpart_under=fit_rpart_under, rpart_over=fit_rpart_over, rpart_rose=fit_rpart_rose))
 summary(models)
