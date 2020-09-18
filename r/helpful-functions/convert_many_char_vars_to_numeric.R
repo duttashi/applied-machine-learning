@@ -1,4 +1,5 @@
 # Q. How to convert many character columns to numeric
+# required libraries: dplyr, plyr, magritrr
 
 # sample data
 df<- data.frame(gender=c("male","female","transgender"),
