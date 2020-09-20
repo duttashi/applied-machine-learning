@@ -1,5 +1,5 @@
 
-## Applied Machine Learning with Python and R
+## Applied Machine Learning with Python, PowerBI and R
 
 
 ![https://github.com/duttashi/applied-machine-learning/pulls](https://img.shields.io/badge/contributions-welcome-green.svg)
@@ -12,8 +12,23 @@
 
 #### Introduction
 
-- The purpose of this project is to provide a comprehensive and yet simple course in Machine Learning using Python and R
+- The purpose of this project is to provide a comprehensive and yet simple course in Machine Learning using Python, PowerBI and R. It is a *Work in progress*.
 
+#### Navigation structure
+
+The root folders are;
+
+
+- `python_3`, 
+- `powerbi` and 
+- `r`. 
+
+These primary folders follow a similar structure, wherein, each is sub-divided into `*3-sub-folders*, namely; 
+
+
+- `experiments`: holds general coding scripts; 
+- `helpful-functions`: holds custom or user-defined functions that resulted as a requirement from experiments; 
+- `solutions`: hold complete case studies based on experiments.
 
 #### Required Software information
 
@@ -62,3 +77,4 @@ This repository follows the Hadley Wickham [R Style Guide](http://stat405.had.co
 - Commenting guidelines
 	- Comment your code. Entire commented lines should begin with # and one space. Comments should explain the why, not the what.
 	- Use commented lines of - and = to break up your files into scannable chunks.
+
