@@ -4,7 +4,7 @@ Created on Thu Jul  2 17:40:28 2020
 
 @author: Ashish
 Objective: To predict the price-range of mobile phones
-Data Source: https://www.kaggle.com/prajwal17/mobile-price-prediction-project?
+Data Source: https://www.kaggle.com/iabhishekofficial/mobile-price-classification
 """
 # load the required libraries
 import pandas as pd

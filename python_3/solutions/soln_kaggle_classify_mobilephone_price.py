@@ -4,7 +4,7 @@ Created on Thu Jul  2 17:40:28 2020
 
 @author: Ashish
 Objective: To predict the price-range of mobile phones
-Data Source: https://www.kaggle.com/prajwal17/mobile-price-prediction-project?
+Data Source: https://www.kaggle.com/iabhishekofficial/mobile-price-classification
 """
 # load the required libraries
 import pandas as pd
@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
-from sklearn.model_selection import GridSearchCV
+#from sklearn.model_selection import GridSearchCV
 
 # Now read the data and store it in a dataframe
 mobile_train = pd.read_csv("../../data/kaggle_mobile_price_train.csv")
