@@ -68,7 +68,7 @@ names_test = X_test.columns.values[selector.get_support()]
 print("X train features:",names_train) # 95% accuracy
 print("X test features:",names_test) # 94% accuracy
 
-########## Note: GridSearchCV takes a long time
+########## Note: GridSearchCV takes a long time: 35 minuts
 # ## Hyperparameter Tuning using GridSearch CV for SVM model
 # C=[1,0.1,0.25,0.5,2,0.75]
 # kernel=["linear","rbf"]
