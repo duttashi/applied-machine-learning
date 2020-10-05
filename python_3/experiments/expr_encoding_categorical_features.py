@@ -2,6 +2,7 @@
 """
 Created on Sun Sep 20 12:16:07 2020
 Encoding categorical features
+Reference: https://contrib.scikit-learn.org/category_encoders/
 @author: Ashish
 """
 
@@ -22,8 +23,14 @@ df = pd.DataFrame({
 print(df)
 # instantiate an encoder - here we use Binary()
 ce_binary = ce.BinaryEncoder()
+print("\n### Binary Encoding ###\n", ce_binary.fit_transform(df))
+
 # fit and transform and presto, you've got encoded data
-print(ce_binary.fit_transform(df))
+#print(ce_binary.fit_transform(df))
 # instantiate an encoder - here we use one_hot()
 ce_one_hot = ce.OneHotEncoder()
-print(ce_one_hot.fit_transform(df))
+print("\n### One-Hot Encoding ###\n",ce_one_hot.fit_transform(df))
+
+# Ordinal Encoding
+ce_ord_encod = ce.OrdinalEncoder()
+print("\n### Ordinal Encoding ###\n",ce_ord_encod.fit_transform(df))
