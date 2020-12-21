@@ -17,6 +17,10 @@ test_data = pd.read_csv("../../data/kaggle_credit_approval_test.csv")
 
 # merge the train and test dataframes
 df = pd.concat([test_data.assign(ind="test_data"), train_data.assign(ind="train_data")])
+
+# split dataframe into train & test
+# test, train = df[df["ind"].eq("test_data")], df[df["ind"].eq("train_data")]
+
 print(df.columns)
 print(df.shape)
 # function for data cleaning
