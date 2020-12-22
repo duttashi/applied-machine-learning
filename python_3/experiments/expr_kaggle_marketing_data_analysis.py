@@ -18,6 +18,10 @@ df = pd.read_csv("../../data/kaggle_marketing_data.csv")
 # Exploratory data analysis
 
 # custom functions
+def get_miss_cols(data):
+    miss_cols = data.columns[data.isnull().any()]
+    return miss_cols
+
 def missing_data_percentage(data):
     
     data_na = (data.isnull().sum() / len(data)) * 100
@@ -34,13 +38,41 @@ def missing_data_plot(data_na):
     # plt.show()
     # use return
     return fig
+
+
 # number of cols and rows
 print(df.shape) # 2240 rows, 28 cols
-# print(df.columns)
+print(df.columns)
+print(df.dtypes) # print column data types
+
+# convert column data types
+df['Year_Birth'] = pd.to_datetime(df['Year_Birth'])
+df['Dt_Customer'] = pd.to_datetime(df['Dt_Customer'])
+
+# collect multiple olumns in a list and change their data type
+change_cols_dtype = ['Kidhome','Teenhome','AcceptedCmp3',
+                     'AcceptedCmp4','AcceptedCmp5','AcceptedCmp1',
+                     'AcceptedCmp1','AcceptedCmp2',
+                     'Response','Complain']
+df[change_cols_dtype] = df[change_cols_dtype].astype(str)
+
+# remove dollar & comma sign from Income variable and change dtype to float
+df['Income'] = df['Income'].str.replace(',', '').str.replace('$', '').astype(float)
+
+print(df.dtypes) # print column data types
+
 # check for missing values
 miss_dat_perc = missing_data_percentage(df)
 print(miss_dat_perc)
-print(missing_data_plot(df))
+miss_data = get_miss_cols(df)
+print(miss_data)
 
+# Feature Engineering
+# Create new columns
+df['day'] = df['Dt_Customer'].dt.day
+df['month'] = df['Dt_Customer'].dt.month
+df['year'] = df['Dt_Customer'].dt.year
+
+print(df.head(5))
 
 
