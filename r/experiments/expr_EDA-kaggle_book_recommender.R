@@ -52,26 +52,65 @@ df_users<- df_users %>%
 df_ratings <- df_ratings %>%
   rename(c(userID = user.id, bookRating = book.rating))
 
-colnames(df_books)
-colnames(df_users)
 # split location into separate cols
 df_users <- df_users %>%
   separate(location, into = c("city","state","country"), sep = ",")
+
+
+
+
 # keep books published since 1900
 df_books <- df_books %>%
   filter(year_publ>=1900 & year_publ<=2021)
-colnames(df_books)
 
 # Get data of only those users who have given ratings: inner join users with ratings
 df_userating <- df_users %>%
   inner_join(df_ratings) %>%
   # filter out toddlers and ppl above 91 years age
   filter(age>5 & age<91) 
-colnames(df_userating)
-
 # join users, ratings and books on book isbn
 df_userating_books <- df_books %>%
   inner_join(df_userating, by="isbn")
+# create a copy
+df<- df_userating_books
 
-# write data to disc
-write.csv(df_userating_books, file = "data/kaggle_booksdata_clean.csv")
+# further data cleaning
+df %>%
+  count(country, sort = TRUE) %>%
+  filter(n > 1000) %>%
+  mutate(country = reorder(country, n)) %>%
+  ggplot(aes(n, country)) +
+  geom_col() +
+  labs(y = NULL)
+# filter countries with max user ratings as per the plot above
+some_cntry<- c("usa","canada","united kingdom","germany","australia","spain","france","portugal","malaysia")
+df<- df %>%
+  filter(str_detect(country, some_cntry)) %>%
+  # filter out books with zero rating
+  filter(bookRating>0)
+df$image.url.m<-NULL
+table(df$bookRating)
+# filter user ratings by country and user age
+# plot
+df %>%
+  # plot children book readership by country
+  #filter(age>6 & age <12) %>%
+  # plot teen book readership by country
+  #filter(age>11 & age <17) %>%
+  # plot adult book readership by country
+  filter((age>16 & age<100)) %>%
+  count(country, sort = TRUE) %>%
+  mutate(country = reorder(country, n)) %>%
+  ggplot(aes(n, country)) +
+  geom_col() +
+  labs(y = NULL)
+
+# FEATURE ENGINEERING
+# create a new column called age_bracket. 
+# group age: kids(6-11), teen(12-17), adult(18 and above)
+df<- df %>%
+  mutate(agegroup = case_when(age>5 & age<12 ~"kid",
+                              age>11 & age<18 ~"teen",
+                              age>17 & age<101 ~"adult"))
+table(df$agegroup, df$bookRating)
+str(df)
