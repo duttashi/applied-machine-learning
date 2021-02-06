@@ -1,5 +1,6 @@
 # Data analysis Book recommendation 
-# Objective: to predict whether a customer will buy insurance from airline or not 
+# Objective: to predict whether a customer will buy 
+# Data source: https://www.kaggle.com/arashnic/book-recommendation-dataset
 # Script author: Ashish Dutt
 # Script create date: 18/1/2020
 # Script last modified date: 
@@ -114,3 +115,11 @@ df<- df %>%
                               age>17 & age<101 ~"adult"))
 table(df$agegroup, df$bookRating)
 str(df)
+table(df$year_publ)
+# group books published year
+df<- df %>%
+  mutate(yrpubgrp = case_when(year_publ<1981 ~"historic",
+                              year_publ>1980 & year_publ<2001 ~"mediveal",
+                              year_publ>2000 ~"modern"))
+table(df$yrpubgrp, df$agegroup) # majority of book ratings are between year 1980-2000 and rated by adults
+
