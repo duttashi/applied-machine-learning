@@ -14,13 +14,7 @@ df <- read.csv("data/uciml_adult_data.csv")
 sum(is.na(df)) # 4262 missing values
 colSums(is.na(df)) # workclass & native country has missing values
 
-# subset all character cols
-char_col <- df[, sapply(df, class) == 'character']
-str(char_cols)
-# convert all character cols to numeric format
-df[char_col] <- sapply(df[,colnames(char_col)],as.numeric)
-# df<- df %>%
-#   mutate_if(is.character, as.numeric)
-df[,c(2,4,6:10,14:15)]<- sapply(df[,c(2,4,6:10,14:15)],as.numeric)
+# rearrange the cols
+df1 <- df %>%
+  arrange(as.numeric, as.character)
 str(df)
-table(df$workclass)
