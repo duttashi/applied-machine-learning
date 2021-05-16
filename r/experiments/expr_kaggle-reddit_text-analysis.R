@@ -4,13 +4,35 @@
 # clean the workspace
 rm(list = ls())
 # load required libraries
+library(readr)
 library(stringr)
 library(tidyverse)
 library(tidytext)
 
+library(purrr)
+library(stringr)
+library(tidyr)
+library(dplyr)
+
 df<- read_csv(file = "data/kaggle_reddit_data/reddit_data_clean.csv")
 str(df)
 colnames(df)
+
+str_view_all(df$post, "[^http$]")
+
+
+df$post_text <- str_extract_all(df$post, '[a-z]+', simplify=TRUE)
+df$post_text <- str_extract(df$post_text, '![https]+')
+
+# https://stackoverflow.com/questions/58883580/extract-words-from-text-using-dplyr-and-stringr
+colnames(df)
+library(stringi)
+df1<-df %>% 
+  mutate(Words = str_extract_all(post, "[[:alpha:] ]+"),
+           #str_extract_all(post, '[a-z](4)'),
+         Words = map(Words, ~ as.list(unique(.x)) %>% 
+                       set_names(str_c('col', seq_along(.))))) %>%
+  unnest_wider(Words)
 
 # total comments per user
 df %>%
