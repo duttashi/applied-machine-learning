@@ -6,17 +6,66 @@ rm(list = ls())
 
 # required libraries
 library(tidyverse)
+library(tidytext)
 
 # Exploratory Data Analysis
 df<- read_csv("data/kaggle_sfsalaries.csv", na = c("", NA))
+str(df)
 dim(df) # 148654 rows 13 cols
 sum(is.na(df)) # 446579 missing values
 colSums(is.na(df)) # vars benefits, status, notes are completely blank. remove them from further analysis
 
 # drop all blank cols
-df$Id<- NULL
 df$Notes<- NULL
 df$Agency<- NULL # static with only 1 value
+
+# Tidy text cleaning
+# JobTile: Extract single word detailing the job title
+
+df_clean<-df %>%
+  # lowercase all character variables
+  mutate(across(where(is.character), tolower))%>%
+  filter(!str_detect(JobTitle,"\\W")) %>%
+  #group_by(JobTitle)%>%
+  arrange(desc(JobTitle))
+  
+
+table(df_clean$JobTitle)
+df_clean %>% 
+  # arrange(desc(JobTitle)) %>%
+  slice_min(JobTitle, n=10) %>%
+  #top_n(5)
+  ggplot(., aes(x=BasePay, y=JobTitle))+
+  geom_boxplot()+
+  facet_wrap(~JobTitle)
+
+  # anti_join(stop_words, by= c("JobTitle" = "word"))%>%
+  # #unnest_tokens(JobTitle, text)
+  # #filter(str_detect(str_to_lower(JobTitle),"[a-zA-Z]"))
+  # unnest_tokens(word, JobTitle) 
+# anti_join(get_stopwords()) %>%
+  # mutate(JobTitle_Count = count(word))
+  #mutate(word_count = count(word))
+
+
+names(df)
+corp <- Corpus(DataframeSource(df$JobTitle)) 
+# Error in DataframeSource(df$JobTitle) : 
+#   all(!is.na(match(c("doc_id", "text"), names(x)))) is not TRUE
+
+# What the error means: 
+wa# its looking for a column named doc_id and a column named text, and didn’t find them in your dataframe”. As the documentation for DataframeSource mentions: “The first column must be named ‘doc_id’ and contain a unique string identifier for each document. The second column must be named ‘text’”. It’s probably easiest to use country_code as our unique id variable, so we rename that column to doc_id, and we’re good:
+  
+names(df)[1]<- "doc_id"
+docs <- tm_map(corp, removePunctuation)
+docs <- tm_map(docs, removeNumbers) 
+docs <- tm_map(docs, tolower)
+docs <- tm_map(docs, removeWords, stopwords("spanish"))
+docs <- tm_map(docs, stemDocument, language = "spanish") 
+docs <- tm_map(docs, PlainTextDocument) 
+dtm <- DocumentTermMatrix(docs)   
+dtm  
+
 
 # Feature Engineering
 job_type_legal<- 'police|fire|sheriff|attorney|lawyer|judge|auditor|inspector'
