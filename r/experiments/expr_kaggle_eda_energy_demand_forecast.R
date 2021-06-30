@@ -34,3 +34,14 @@ df_enrgy<- df_enrgy %>%
 sum(is.na(df_enrgy))
 sum(is.na(df_weather)) # 0 missing values
 
+## convert all character cols to numeric
+df_enrgy[] <- lapply(df_enrgy, function(x) as.numeric(as.character(x)))
+
+str(df_enrgy)
+df_enrgy %>%
+  pivot_longer(!year, names_to = "date", values_to = "count")
+table(df_enrgy$year)
+table(df_enrgy$month)
+table(df_enrgy$date)
+
+table(df_enrgy$year, df_enrgy$month)
