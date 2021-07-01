@@ -1,5 +1,7 @@
 # data souce: https://www.kaggle.com/nicholasjhana/energy-consumption-generation-prices-and-weather
 
+# clean workspace
+rm(list = ls())
 
 library(tidyverse)
 
@@ -21,8 +23,16 @@ str(df_enrgy)
 ## split time col into date & time
 df_enrgy$time<- as.POSIXct(df_enrgy$time)
 df_enrgy<- tidyr::separate(df_enrgy, time, c("date", "time"), sep = " ")
-df_enrgy<- tidyr::separate(df_enrgy, date, c("year","month","date"), sep = "-")
-df_enrgy<- tidyr::separate(df_enrgy, time, c("hour","min","sec"), sep = ":")
+
+## convert date, time from character to date, time format
+str(df_enrgy$date)
+str(df_enrgy$time)
+df_enrgy$date<- lubridate::ymd(df_enrgy$date)
+df_enrgy$time<- lubridate::hms(df_enrgy$time)
+
+str(df_enrgy)
+# df_enrgy<- tidyr::separate(df_enrgy, date, c("year","month","date"), sep = "-")
+# df_enrgy<- tidyr::separate(df_enrgy, time, c("hour","min","sec"), sep = ":")
 
 ## Remove blank variables/columns
 df_enrgy$generation.hydro.pumped.storage.aggregated<- NULL
@@ -35,13 +45,29 @@ sum(is.na(df_enrgy))
 sum(is.na(df_weather)) # 0 missing values
 
 ## convert all character cols to numeric
-df_enrgy[] <- lapply(df_enrgy, function(x) as.numeric(as.character(x)))
+# df_enrgy[] <- lapply(df_enrgy, function(x) as.numeric(as.character(x)))
 
+## For weather data, split time col into date & time
+df_weather$dt_iso<- as.POSIXct(df_weather$dt_iso)
+df_weather<- tidyr::separate(df_weather, dt_iso, c("date", "time"), sep = " ")
+
+## convert date, time from character to date, time format
+str(df_weather$date)
+str(df_weather$time)
+df_weather$date<- lubridate::ymd(df_weather$date)
+df_weather$time<- lubridate::hms(df_weather$time)
+
+## convert date, time to date format
+
+# df_weather<- tidyr::separate(df_weather, date, c("year","month","date"), sep = "-")
+# df_weather<- tidyr::separate(df_weather, time, c("hour","min","sec"), sep = ":")
+
+# join energy table & weather table on date and time cols
 str(df_enrgy)
-df_enrgy %>%
-  pivot_longer(!year, names_to = "date", values_to = "count")
-table(df_enrgy$year)
-table(df_enrgy$month)
-table(df_enrgy$date)
+str(df_weather)
 
-table(df_enrgy$year, df_enrgy$month)
+df_final <- left_join(df_enrgy, df_weather, 
+                      by=c("date"="date","time"="time")
+                      )
+head(df_final$price.actual)
+head(df_final$price.day.ahead)
