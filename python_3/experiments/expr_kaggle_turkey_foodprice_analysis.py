@@ -103,7 +103,17 @@ pio.renderers.default='browser'
 fig = px.bar(data_frame = df, x = x_Price, y = y_Price, color = x_Price, template = 'plotly_dark',
         labels={'x': "Price", 'y': "Number",'color':'Price group'},
        title = 'Number of products per Price group')
-fig.show()
+#fig.show()
 
+print("Year\n", df.Year.value_counts())
+print("Month\n", df.Month.value_counts())
 
+# rename the Month column values from numeric to text
+vals2replc = {'1':'jan','2':'feb','3':'mar','4':'apr',
+                        '5':'may','6':'jun','7':'jul','8':'aug',
+                        '9':'sep','10':'oct','11':'nov','12':'dec'}
+# convert month data type from int to str
+df['Month'] = df['Month'].apply(str)
+df = df.replace({'Month': vals2replc})
+print(df.Month.value_counts()) 
 
