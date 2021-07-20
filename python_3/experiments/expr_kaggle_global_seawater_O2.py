@@ -8,15 +8,16 @@ Created on Tue Jul 20 10:30:04 2021
 # required libraries
 import pandas as pd
 import numpy as np
-import seaborn as sns
+#import seaborn as sns
+import matplotlib.pyplot as plt
 
 # load dataset
 df = pd.read_csv("../../data/kaggle_gso18.csv",
                  dtype = {'Year':'category',
                           'month':'category'})
 print("data shape: ",df.shape,
-      df.head(5), "\n","Variable\n",df.columns,
-      "Variable data types:\n",df.dtypes)
+      "\n","Variable names:\n",df.columns,
+      "\nVariable data types: ",df.dtypes)
 
 # Data management/cleaning
 
@@ -32,6 +33,13 @@ df['dD'].replace('**',np.nan, inplace= True)
 df['Year'].replace('**',np.nan, inplace= True)
 df['Month'].replace('**',np.nan, inplace= True)
 
+## change data type
+
+df[['pTemperature','Salinity','d18O']] = df[['pTemperature','Salinity','d18O']].astype(float)
+df[['Year','Month']] = df[['Year','Month']].astype(str)
+# df = df.astype({int_cols: int})
+print(df.dtypes)
+
 # show cols with missing values
 print("Cols with missing values:\n",df.columns[df.isnull().any()])
 percent_missing = df.isnull().sum() * 100 / len(df)
@@ -43,20 +51,62 @@ print(missing_value_df)
 df=df.drop(['dD'], axis=1)
 print(df.shape)
 
-# filter missing vavlues
-# filtered_df = df[df[['pTemperature', 'Salinity', 'd18O',
-#                      'Year','Month']].notnull().all(1)]
-# print("\nOriginal data frame shape", df.shape)    
-# print("\nFiltered data frame shape", filtered_df.shape)
-# write to disk
-#df.to_csv("../../data/kaggle_gso18_clean.csv", sep=",")
+## missing values
+labels = []
+values = []
+print("\n## Count of missing values per column")
+for col in df.columns:
+    labels.append(col)
+    values.append(df[col].isnull().sum())
+    print(col, ": ",values[-1])
+
+# Missing value visuals
+# ind = np.arange(len(labels))
+# width = 0.9
+# fig, ax = plt.subplots(figsize=(12,50))
+# rects = ax.barh(ind, np.array(values), color='y')
+# ax.set_yticks(ind+((width)/2.))
+# ax.set_yticklabels(labels, rotation='horizontal')
+# ax.set_xlabel("Count of missing values")
+# ax.set_title("Number of missing values in each column")
+# #autolabel(rects)
+# plt.show()
+
+
 # Univariate plots
-sns.set(style="white", color_codes=True)
+plt.figure(figsize=(16,10), dpi= 80)
+plt.plot('Salinity', data=df, color='tab:blue')
+plt.show()
 
-sns.distplot(df['pTemperature'])
-# sns.relplot(x='Year', y='pTemperature', data = df)
-# sns.pairplot(df)
-# sns.relplot(x='pTemperature', y='Salinity', data=df_filtr)
+plt.figure(figsize=(16,10), dpi= 80)
+plt.plot('pTemperature', data=df)
+plt.show()
+
+plt.figure(figsize=(16,10), dpi= 80)
+plt.plot('d18O', data=df, color='tab:blue')
+plt.show()
+
+plt.figure(figsize=(16,10), dpi= 80)
+plt.plot('Year', data=df)
+plt.show()
+
+df.plot.scatter(x='Year', y='Salinity', color='red')
 
 
+# Distribution plot:
+# Now let us look at the distribution plot of some of the numeric variables.
 
+# cols_to_use = ['Depth','pTemperature','Salinity','d180']
+# fig = plt.figure(figsize=(8, 20))
+# plot_count = 0
+# for col in cols_to_use:
+#     plot_count += 1
+#     plt.subplot(4, 1, plot_count)
+#     plt.plot(range(df.shape[0]), df[col].values)
+#     plt.title("Distribution of "+col)
+# plt.show()
+
+
+# df = df[, float_cols].astype(int)
+
+# plt.plot('Year','Depth', data= df)
