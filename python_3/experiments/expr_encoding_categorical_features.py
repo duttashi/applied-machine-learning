@@ -12,6 +12,7 @@ Reference: https://contrib.scikit-learn.org/category_encoders/
 # import the packages
 import pandas as pd
 import category_encoders as ce
+from sklearn.preprocessing import LabelEncoder
 
 # make some data
 df = pd.DataFrame({
@@ -19,8 +20,17 @@ df = pd.DataFrame({
  'gender':["male","female","female","male","female"],
  'mood':["happy","sad","happy","sad","happy"],
  'outcome':[1, 1,0,0,0]})
+print("\n Original dataframe:\n",df)
+# Encooding categorical data
 
-print(df)
+encoder = LabelEncoder()
+# df_cat = df['gender']
+df_cat_encoded = encoder.fit_transform(df['gender'])
+print("Encoded categorical vars\n",df_cat_encoded)
+df1 = encoder.fit_transform(df_cat_encoded.reshape(-1,1))
+print("Encoded categorical vars\n",df1)
+print("\nEncoding classes: ", encoder.classes_)
+
 # instantiate an encoder - here we use Binary()
 ce_binary = ce.BinaryEncoder()
 print("\n### Binary Encoding ###\n", ce_binary.fit_transform(df))

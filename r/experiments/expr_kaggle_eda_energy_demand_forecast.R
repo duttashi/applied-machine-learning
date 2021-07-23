@@ -69,5 +69,8 @@ str(df_weather)
 df_final <- left_join(df_enrgy, df_weather, 
                       by=c("date"="date","time"="time")
                       )
-head(df_final$price.actual)
-head(df_final$price.day.ahead)
+# sort dataframe by date
+df_final <- df_final %>%
+  arrange(date)
+
+### time series data visualization
