@@ -3,12 +3,13 @@
 Created on Tue Jul 20 10:30:04 2021
 # reference: https://www.kaggle.com/tjkyner/global-seawater-oxygen18-levels
 @author: Ashish
+Reference: https://www.kaggle.com/deblina00/drinking-water-potability-eda-and-prediction
 """
 
 # required libraries
 import pandas as pd
 import numpy as np
-#import seaborn as sns
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 # load dataset
@@ -75,7 +76,7 @@ for col in df.columns:
 
 # Univariate plots
 plt.figure(figsize=(16,10), dpi= 80)
-plt.plot('Salinity', data=df, color='tab:blue')
+plt.plot('Salinity', data=df)
 plt.show()
 
 plt.figure(figsize=(16,10), dpi= 80)
@@ -83,14 +84,12 @@ plt.plot('pTemperature', data=df)
 plt.show()
 
 plt.figure(figsize=(16,10), dpi= 80)
-plt.plot('d18O', data=df, color='tab:blue')
+plt.plot('d18O', data=df)
 plt.show()
 
 plt.figure(figsize=(16,10), dpi= 80)
 plt.plot('Year', data=df)
 plt.show()
-
-df.plot.scatter(x='Year', y='Salinity', color='red')
 
 
 # Distribution plot:
@@ -107,6 +106,24 @@ df.plot.scatter(x='Year', y='Salinity', color='red')
 # plt.show()
 
 
-# df = df[, float_cols].astype(int)
+sns.jointplot(data = df, x='Salinity', y='d18O')
+sns.jointplot(data = df, x='Salinity', y='pTemperature')
 
-# plt.plot('Year','Depth', data= df)
+# filter out negative Sality values
+df1 = df[ ( df['Salinity'] >= 0) & ( df['d18O'] >= 0)]
+print(df1.shape)
+
+sns.jointplot(data = df1, x='Salinity', y='d18O', hue='Month')
+sns.jointplot(data = df1, x='Salinity', y='pTemperature', hue='Month')
+
+### Check for correlation
+Corrmat = df1.corr()
+plt.subplots(figsize=(7,7))
+sns.heatmap(Corrmat, cmap="YlGnBu", square = True, annot=True, fmt='.2f')
+plt.show()
+
+# check for correlations between all attributes
+from pandas.tools.plotting import scatter_matrix
+attributes = ['Longitude', 'Latitude', 'Depth', 'pTemperature', 'Salinity', 'd18O',
+       'dD']
+scatter_matrix(df[attributes], figsize = (12,8))
