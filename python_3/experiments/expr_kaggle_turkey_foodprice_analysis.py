@@ -117,3 +117,50 @@ df['Month'] = df['Month'].apply(str)
 df = df.replace({'Month': vals2replc})
 print(df.Month.value_counts()) 
 
+# creating date deaftures
+# Spring (March, April, May) Spring is a prime season because the weather is moderate throughout the country and the days are long. ...
+# Summer (June, July, August) ...
+# Autumn (September, October, November)
+# Winter (December, January, February)
+
+def create_turkey_season(source_df, target_df, feature_name):
+    """
+    Winter: December - February
+    Spring: March - May 
+    Summer: June - August 
+    Autumn: September - November 
+    """
+    month_to_season_map = {
+        "jan": "winter",
+        "feb": "winter",
+        "mar": "spring",
+        "apr": "spring",
+        "may": "spring",
+        "jun": "summer",
+        "jul": "summer",
+        "aug": "summer",
+        "sep": "autumn",
+        "oct": "autumn",
+        "nov": "autumn",
+        "dec": "winter",
+        }
+    target_df.loc[:, "season"] = source_df.loc[:, feature_name].map(month_to_season_map)
+    
+    return target_df
+
+df1 = create_turkey_season(df, df, "Month")
+print("\n### new dataframe\n", df1.head(5))
+print(df1.columns)
+df1['season'].value_counts().plot(kind='barh')
+
+def plot_boxh_groupby(df, feature_name, by):
+    """
+    Box plot with groupby feature
+    """
+    df.boxplot(column=feature_name, by=by, vert=False, figsize=(10, 6), color="blue")
+    plt.title(f"Distribution of {feature_name} by {by}")
+    plt.show()
+    
+# plot_boxh_groupby(df = df1, feature_name="season", by="Year")
+df1.plot(kind="scatter", x="Month", y="Price")
+sns.boxplot(x="Month", y="Price", data= df1)

@@ -28,14 +28,12 @@ sum(is.na(df))
 colSums(is.na(df))
 table(df$class.name)
 
-str(df)
 df <- df %>%
   mutate(title = factor(title),
          review.text = factor(review.text),
          division.name = factor(division.name),
          department.name = factor(department.name),
          class.name = factor(class.name))
-str(df)
 df %>%
   group_by(department.name) %>%
   summarise(cnt = n()) %>%
@@ -96,7 +94,6 @@ df %>%
 
 # Feature interaction visualizations
 # reference: https://www.kaggle.com/headsortails/personalised-medicine-eda-with-tidy-r
-str(df)
 df %>%
   filter(!is.na(department.name) %in% str_c(highDiv$division.name)) %>%
   ggplot(aes(department.name))+

@@ -11,3 +11,12 @@
 
 1. From the [documentation](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html), the purpose of `pipeline` in Python  is to assemble several steps that can be cross-validated together while setting different parameters. A List of (name, transform) tuples (implementing fit/transform) that are chained.
 2. In simple terms, Pipeline is just an abstract notion, it's not some existing ml algorithm. Often in ML tasks you need to perform sequence of different transformations (find set of features, generate new features, select only some good features) of raw dataset before applying final estimator. See this [SO post](https://stackoverflow.com/questions/33091376/python-what-is-exactly-sklearn-pipeline-pipeline) 
+
+### Scikit-learn terminology
+
+|Term|Meaning|
+|---|---|
+|Estimator|Algorithm|
+|Samples|Rows|
+|Features|Columns|
+|hyper-parameters|parameters *all algorithms/estimators have parameters also called hyper-parameters that can be tuned*|
