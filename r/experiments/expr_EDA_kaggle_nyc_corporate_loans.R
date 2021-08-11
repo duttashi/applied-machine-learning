@@ -3,6 +3,7 @@
 
 library(tidyverse)
 library(lubridate)
+library(stringr) # for str_wrap()
 
 # clean workspace
 rm(list = ls())
@@ -20,8 +21,6 @@ df <- df %>%
 colnames(df)
 
 # split date into day, month, year cols
-str(df)
-
 df<-df %>%
   mutate(
     fisclYrEndDate = mdy(fiscal.year.end.date),
@@ -40,7 +39,6 @@ df<-df %>%
 df$loanaward_month<- month.name[df$loanaward_month]
 df$fsYrEnd_month<- month.name[df$fsYrEnd_month]
 
-str(df)
 # drop column
 df$loan_award_date<- NULL
 df$date.loan.awarded<- NULL
@@ -64,10 +62,34 @@ df<- df %>%
 df<- df %>%
   filter(!is.na(df[,c(14)]))
 colSums(is.na(df))
-dim(df) # 5684 observations in 17 cols
+dim(df) # 5684 observations in 21 cols
 
-# rename factor levels. Name months
+# Revalue Factor Levels for categorical variables
+# It's observed in this dataset, few categorical variables such as `authority name, loan purpose` consist of very long factor names. These will pose a problem in data visualization.
+loan_purpose_new_levels<- c("startup","build commercial property", 
+                        "education","buy equipment",
+                        "build residential property","buy land",
+                        "restoration","recruitment")
+df$loan.purpose<- as.factor(df$loan.purpose)
+loan_purpose_existing_levels<- levels(df$loan.purpose)  
+names(loan_purpose_existing_levels)<- loan_purpose_new_levels
+# now using mutate and fct_recode to recode the factor levels
+df <- df %>%
+  mutate(loan_purpose = fct_recode(loan.purpose, !!!loan_purpose_existing_levels))
+levels(df$loan_purpose)
+# drop original variable
+df$loan.purpose<- NULL
+# lets wrap the text to no more than 10 spaces
+df$loan_purpose<- str_wrap(df$loan_purpose, width = 4)
 
+# Let's look at the distributions.
+# For example, with categorical data, the distribution simply describes the proportion of each unique category.
+# Distribution visualisation for categorical data: use Barplot
+str(df)
+colnames(df)
+ggplot(data = df, aes(x= loan_purpose))+
+  geom_bar()+
+  theme_bw()
 
 
 # Individual feature visualisations
