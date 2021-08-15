@@ -207,13 +207,8 @@ for(i in names(df.1)){
 # No skewed variables found
 
 
-### Supervised Feature Selection
-library(caret)
-set.seed(2021)
-str(df.1)
-colnames(df.1)
 # calculate the correlation matrix
-cor.mat<- cor(df.1[,c(13:20)])
+cor.mat<- cor(df.1[,c(11:17)])
 # summarize the correlation matrix
 print(cor.mat)
 # find attributes that are highly corrected (ideally >0.75)
@@ -221,3 +216,35 @@ highlyCorrelated <- findCorrelation(cor.mat, cutoff=0.5, names = TRUE)
 # print indexes of highly correlated attributes
 print(highlyCorrelated)
 colnames(df.1[,highlyCorrelated])
+# drop correlated var
+df.1$jobs.planned<- NULL
+
+## Predictive Modeling
+## Recode character variables to nominal
+str(df.1)
+df.1<- df.1 %>%
+  mutate(across(authority.name:loan_purpose,~as.factor(.))) %>%
+  mutate(across(authority.name:loan_purpose,~factor(.,levels = unique(.)))) %>%
+  mutate(across(authority.name:loan_purpose,~as.numeric(.)))
+
+## Assume ``amount.repaid` is the response variable `
+# split the train dataset into train and test set
+set.seed(2021)
+index <- createDataPartition(df.1$amount.repaid, p = 0.7, list = FALSE)
+df_train <- df.1[index, ]
+df_test  <- df.1[-index, ]
+
+# Model building 
+# Build the model
+str(df.1)
+lm_model <- lm(amount.repaid ~., data = df_train)
+# plot residual plots
+ggplot(lm_model, aes(x = .fitted, y = .resid)) + 
+  geom_point()+
+  theme_bw()
+
+# Make predictions and compute the R2, RMSE and MAE
+predictions <- lm_model %>% predict(df_test)
+data.frame( R2 = R2(predictions, df_test$amount.repaid),
+            RMSE = RMSE(predictions, df_test$amount.repaid),
+            MAE = MAE(predictions, df_test$amount.repaid))
