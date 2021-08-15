@@ -4,12 +4,13 @@
 library(tidyverse)
 library(lubridate)
 library(stringr) # for str_wrap()
-
+library(caret)
 # clean workspace
 rm(list = ls())
 
 # read data
 df<- read_csv("data/kaggle_nyc_loans.csv",na=c("",NA))
+dim(df) # 13513 rows 18 cols
 
 # Data cleaning
 
@@ -82,29 +83,63 @@ df$loan.purpose<- NULL
 # lets wrap the text to no more than 10 spaces
 df$loan_purpose<- str_wrap(df$loan_purpose, width = 4)
 
+# change datatype
+df$recipient.postal.code<- as.character(df$recipient.postal.code)
+df$fsYrEnd_month<- as.character(df$fsYrEnd_month)
+df$fsYrEnd_year<- as.character(df$fsYrEnd_year)
+df$loanaward_month<- as.character(df$loanaward_month)
+df$loanaward_year<- as.character(df$loanaward_year)
+
+# separate categorical & continuous variables
+# use sapply()
+df.cat<-df[,sapply(df, is.character)]
+colnames(df.cat)
+df.cont<-df[,!sapply(df, is.character)]
+colnames(df.cont)
+df.1<- df[,c(colnames(df.cat),colnames(df.cont))]
+colnames(df.1)
+
 # Let's look at the distributions.
 # For example, with categorical data, the distribution simply describes the proportion of each unique category.
 # Distribution visualisation for categorical data: use Barplot
-str(df)
+str(df.1)
 colnames(df)
-ggplot(data = df, aes(x= loan_purpose))+
+
+ggplot(data = df.1, aes(x= loan_purpose))+
   geom_bar()+
+  labs(x="loan purpose", y = "count", title = "Why people take loans?")+
   theme_bw()
 
+# barplot with two categorical variables
+ggplot(data = df.1, aes(loan_purpose, ..count..))+
+  geom_bar(aes(fill=loan.fund.sources), position = "dodge")+
+  labs(x="loan purpose", y = "count", title = "Which loan reason attracts funding agency?")+
+  theme_bw()
+
+ggplot(data = df.1, aes(recipient.state))+
+  geom_bar()+
+  labs(x="loan purpose", y = "count", 
+       title = "Which states give maximum loans?")+
+  theme_bw()
+
+# filter data for NY state and remove the recipient.state variable
+df.1 <- df.1 %>%
+  filter(recipient.state=='NY')
+df.1$recipient.state<- NULL
 
 # Individual feature visualisations
-df %>%
+df.1 %>%
   group_by(loanaward_year) %>%
   summarise(cnt = n()) %>%
   arrange(cnt) %>%
   ggplot(aes(reorder(x= loanaward_year, -cnt, FUN=min), cnt))+
   geom_point(size=4)+
-  labs(x="loanaward_year", y="Frequency")+
+  labs(x="loanaward year", y="Frequency",
+       title = "Which year bagged maximum loans?")+
   coord_flip()+
   theme_bw()
 
-summary(df$original.loan.amount)
-df %>%
+df.1 %>%
   filter(original.loan.amount<=200000) %>%
   ggplot(aes(x = loanaward_year, y = original.loan.amount)) +
   geom_point(color = "darkorchid4") +
@@ -113,22 +148,103 @@ df %>%
        y = "Loan amount",
        x = "Year") + theme_bw(base_size = 12)
 
-df %>%
-  filter(original.loan.amount<=200000 & amount.repaid>0) %>%
-  ggplot(aes(x = loanaward_year, y = amount.repaid)) +
-  geom_point(color = "darkorchid4") +
-  #facet_wrap(~loanaward_year)+
-  labs(title = "Corporate Loans - NYC",
-       subtitle = "Loans per year",
-       y = "Amount repaid",
-       x = "Year") + theme_bw(base_size = 12)
 
-df %>%
-  filter(original.loan.amount<=200000 & amount.repaid>0) %>%
-  ggplot(aes(x = loanaward_year, y = amount.repaid)) +
-  geom_bar(stat = "identity", fill = "darkorchid4") +
-  facet_wrap( ~ loanaward_month, ncol = 3) +
-  labs(title = "Corporate Loans - NYC",
-       subtitle = "Loan amount repaid per year, month",
-       y = "Amount repaid",
-       x = "Year") + theme_bw(base_size = 12)
+# filter out data where amount repaid for startup's is greater than 10000
+df.1 <- df.1 %>%
+  filter(amount.repaid>=1 & amount.repaid<=54000)%>%
+  filter(original.loan.amount <= 200000) %>%
+  filter(loanaward_year>=2000)
+
+# boxplot
+ggplot(data = df.1)+
+  geom_boxplot(aes(x= loan_purpose, y=original.loan.amount),
+               outlier.color="red")+
+  labs(x="loan purpose", y = "original loan amount", title = "Loan reason's vs Loan amount")+
+  theme_bw()
+
+ggplot(data = df.1)+
+  geom_boxplot(aes(x= loan_purpose, y=amount.repaid),
+               outlier.color="red")+
+  labs(x="loan purpose", y = "amount repaid", title = "Loan purpose vs Loan amount repaid")+
+  theme_bw()
+
+colnames(df.1)
+df.1 %>%
+  group_by(recipient.city)%>%
+  summarise(OriginalLoanAmt=sum(original.loan.amount))%>%
+  arrange(OriginalLoanAmt)
+  #ggplot(aes(recipient.city))+
+  #geom_bar()
+
+# CHECK FOR NEAR ZERO VARIANCE COLS
+# Q. How many columns with near zero variance property?
+badCols<- nearZeroVar(df.1)
+dim(df.1[,badCols]) # [1] 3284    3
+names(df.1[,badCols]) # [1] "new.jobs"      "fsYrEnd_month" "fsYrEnd_day"       "isFunded"     "isCollection" "paymt_min"    "paymt_sec"    "principal"
+# remove the near zero variance predictors
+df.1<- df.1[, -badCols]
+dim(df.1) #[1] 3284 17
+
+## Check for multicollinearity
+library(corrplot)
+cor1<- cor(df.1[,-c(1:10)])
+corrplot(cor1, number.cex = .7) 
+
+## Detecting skewed variables
+skewedVars <- NA
+for(i in names(df.1)){
+  if(is.numeric(df.1[,i])){
+    if(i != "xxx"){
+      # Enters this block if variable is non-categorical
+      skewVal <- skewness(df.1[,i])
+      print(paste(i, skewVal, sep = ": "))
+      if(abs(skewVal) > 0.5){
+        skewedVars <- c(skewedVars, i)
+      }
+    }
+  }
+}
+# No skewed variables found
+
+
+# calculate the correlation matrix
+cor.mat<- cor(df.1[,c(11:17)])
+# summarize the correlation matrix
+print(cor.mat)
+# find attributes that are highly corrected (ideally >0.75)
+highlyCorrelated <- findCorrelation(cor.mat, cutoff=0.5, names = TRUE)
+# print indexes of highly correlated attributes
+print(highlyCorrelated)
+colnames(df.1[,highlyCorrelated])
+# drop correlated var
+df.1$jobs.planned<- NULL
+
+## Predictive Modeling
+## Recode character variables to nominal
+str(df.1)
+df.1<- df.1 %>%
+  mutate(across(authority.name:loan_purpose,~as.factor(.))) %>%
+  mutate(across(authority.name:loan_purpose,~factor(.,levels = unique(.)))) %>%
+  mutate(across(authority.name:loan_purpose,~as.numeric(.)))
+
+## Assume ``amount.repaid` is the response variable `
+# split the train dataset into train and test set
+set.seed(2021)
+index <- createDataPartition(df.1$amount.repaid, p = 0.7, list = FALSE)
+df_train <- df.1[index, ]
+df_test  <- df.1[-index, ]
+
+# Model building 
+# Build the model
+str(df.1)
+lm_model <- lm(amount.repaid ~., data = df_train)
+# plot residual plots
+ggplot(lm_model, aes(x = .fitted, y = .resid)) + 
+  geom_point()+
+  theme_bw()
+
+# Make predictions and compute the R2, RMSE and MAE
+predictions <- lm_model %>% predict(df_test)
+data.frame( R2 = R2(predictions, df_test$amount.repaid),
+            RMSE = RMSE(predictions, df_test$amount.repaid),
+            MAE = MAE(predictions, df_test$amount.repaid))
