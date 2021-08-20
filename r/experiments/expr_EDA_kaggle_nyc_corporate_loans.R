@@ -5,6 +5,8 @@ library(tidyverse)
 library(lubridate)
 library(stringr) # for str_wrap()
 library(caret)
+# install.packages("ggcorrplot", dependencies = TRUE)
+library(ggcorrplot)
 # clean workspace
 rm(list = ls())
 
@@ -186,9 +188,7 @@ df.1<- df.1[, -badCols]
 dim(df.1) #[1] 3284 17
 
 ## Check for multicollinearity
-library(corrplot)
-cor1<- cor(df.1[,-c(1:10)])
-corrplot(cor1, number.cex = .7) 
+ggcorrplot(cor(df.1[,-c(1:10)]), type = "lower", lab = TRUE)
 
 ## Detecting skewed variables
 skewedVars <- NA
@@ -205,19 +205,6 @@ for(i in names(df.1)){
   }
 }
 # No skewed variables found
-
-
-# calculate the correlation matrix
-cor.mat<- cor(df.1[,c(11:17)])
-# summarize the correlation matrix
-print(cor.mat)
-# find attributes that are highly corrected (ideally >0.75)
-highlyCorrelated <- findCorrelation(cor.mat, cutoff=0.5, names = TRUE)
-# print indexes of highly correlated attributes
-print(highlyCorrelated)
-colnames(df.1[,highlyCorrelated])
-# drop correlated var
-df.1$jobs.planned<- NULL
 
 ## Predictive Modeling
 ## Recode character variables to nominal
@@ -239,8 +226,16 @@ df_test  <- df.1[-index, ]
 str(df.1)
 lm_model <- lm(amount.repaid ~., data = df_train)
 # plot residual plots
-ggplot(lm_model, aes(x = .fitted, y = .resid)) + 
+# Residuals = Observed - Predicted
+# The most useful way to plot the residuals, 
+# is with your predicted values on the x-axis 
+# and your residuals on the y-axis.
+
+ggplot(lm_model, aes(x = .fitted, y = .resid)) +
   geom_point()+
+  xlab("Predicted values for amount reapid")+
+  ylab("Residuals")+
+  ggtitle("Residual plot")+
   theme_bw()
 
 # Make predictions and compute the R2, RMSE and MAE
@@ -248,3 +243,16 @@ predictions <- lm_model %>% predict(df_test)
 data.frame( R2 = R2(predictions, df_test$amount.repaid),
             RMSE = RMSE(predictions, df_test$amount.repaid),
             MAE = MAE(predictions, df_test$amount.repaid))
+
+residualVals <- df_test$amount.repaid - predictions
+df.2 <- data.frame(df_test$amount.repaid, predictions, 
+                   residualVals)
+colnames(df.2)<- c("observed","predicted","residuals")
+View(df.2)
+
+ggplot(data = df.2, aes(x=predicted, y=residuals))+
+  geom_point()+
+  xlab("Predicted values for amount reapid")+
+  ylab("Residuals")+
+  ggtitle("Residual plot")+
+  theme_bw()
