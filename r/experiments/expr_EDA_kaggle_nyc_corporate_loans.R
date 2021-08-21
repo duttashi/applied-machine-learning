@@ -1,5 +1,7 @@
 # Data source: https://www.kaggle.com/theforcecoder/new-york-city-corporate-loans
 
+# clean workspace
+rm(list = ls())
 
 library(tidyverse)
 library(lubridate)
@@ -7,8 +9,8 @@ library(stringr) # for str_wrap()
 library(caret)
 # install.packages("ggcorrplot", dependencies = TRUE)
 library(ggcorrplot)
-# clean workspace
-rm(list = ls())
+library(moments) # for skewness() function
+
 
 # read data
 df<- read_csv("data/kaggle_nyc_loans.csv",na=c("",NA))
@@ -91,15 +93,53 @@ df$fsYrEnd_month<- as.character(df$fsYrEnd_month)
 df$fsYrEnd_year<- as.character(df$fsYrEnd_year)
 df$loanaward_month<- as.character(df$loanaward_month)
 df$loanaward_year<- as.character(df$loanaward_year)
+df$interest.rate<- as.character(df$interest.rate)
+df$fsYrEnd_day<- as.character(df$fsYrEnd_day)
+df$loanaward_day<- as.character(df$loanaward_day)
+df$jobs.created<- as.character(df$jobs.created)
+df$jobs.planned<- as.character(df$jobs.planned)
+df$new.jobs<- as.character(df$new.jobs)
 
 # separate categorical & continuous variables
 # use sapply()
 df.cat<-df[,sapply(df, is.character)]
-colnames(df.cat)
 df.cont<-df[,!sapply(df, is.character)]
-colnames(df.cont)
 df.1<- df[,c(colnames(df.cat),colnames(df.cont))]
-colnames(df.1)
+
+## Detecting skewed variables
+str(df.1)
+sapply(df.1[,c(19:21)], function(x) ifelse(skewness(x) > 0.75, x <- log1p(x), x))
+# Highly skewed data for continuous variables
+ggplot(data = df.1, aes(x=original.loan.amount))+
+  geom_histogram() # right-skewed/positive skewed data
+ggplot(data = df.1, aes(x=loan.length))+
+  geom_histogram() # right-skewed/positive skewed data
+ggplot(data = df.1, aes(x=amount.repaid))+
+  geom_histogram() # right-skewed/positive skewed data
+
+# Skewness treatment
+# As all continuous variables are right/positively skewed, transformations can be square root, cube root and logarithms
+# Applying logarithmic approach to reduce skewness
+df.1$original.loan.amount<- log10(df.1$original.loan.amount)
+df.1$loan.length<- log10(df.1$loan.length)
+df.1$amount.repaid<- log10(df.1$amount.repaid)
+range(df.1$original.loan.amount)
+range(df.1$amount.repaid)
+range(df.1$loan.length)
+
+# filter rows where amount.repaid & loan.length is less than equal to zero
+df.1<- df.1 %>%
+  filter(amount.repaid>0 & loan.length>0)
+
+ggplot(data = df.1, aes(x=original.loan.amount))+
+  geom_histogram()+
+  theme_bw()
+ggplot(data = df.1, aes(x=loan.length))+
+  geom_histogram()+
+  theme_bw()
+ggplot(data = df.1, aes(x=amount.repaid))+
+  geom_histogram() +
+  theme_bw()
 
 # Let's look at the distributions.
 # For example, with categorical data, the distribution simply describes the proportion of each unique category.
@@ -178,33 +218,24 @@ df.1 %>%
   #ggplot(aes(recipient.city))+
   #geom_bar()
 
+# Change data type
+# char_cols<- colnames(df.1[,c(1:10,17)])
+# df.1[char_cols]<- sapply(df.1[char_cols], as.character)
+# # rearrange the cols: character followed by numeric
+# df.1<- df.1[,c(1:10,17,11:16)]
+# str(df.1)
+
 # CHECK FOR NEAR ZERO VARIANCE COLS
 # Q. How many columns with near zero variance property?
 badCols<- nearZeroVar(df.1)
-dim(df.1[,badCols]) # [1] 3284    3
+dim(df.1[,badCols]) # [1] 5684 2
 names(df.1[,badCols]) # [1] "new.jobs"      "fsYrEnd_month" "fsYrEnd_day"       "isFunded"     "isCollection" "paymt_min"    "paymt_sec"    "principal"
 # remove the near zero variance predictors
 df.1<- df.1[, -badCols]
 dim(df.1) #[1] 3284 17
 
 ## Check for multicollinearity
-ggcorrplot(cor(df.1[,-c(1:10)]), type = "lower", lab = TRUE)
-
-## Detecting skewed variables
-skewedVars <- NA
-for(i in names(df.1)){
-  if(is.numeric(df.1[,i])){
-    if(i != "xxx"){
-      # Enters this block if variable is non-categorical
-      skewVal <- skewness(df.1[,i])
-      print(paste(i, skewVal, sep = ": "))
-      if(abs(skewVal) > 0.5){
-        skewedVars <- c(skewedVars, i)
-      }
-    }
-  }
-}
-# No skewed variables found
+# ggcorrplot(cor(df.1[,-c(1:10)]), type = "lower", lab = TRUE)
 
 ## Predictive Modeling
 ## Recode character variables to nominal
@@ -224,9 +255,13 @@ df_test  <- df.1[-index, ]
 # Model building 
 # Build the model
 str(df.1)
-lm_model <- lm(amount.repaid ~., data = df_train)
+lm_model <- lm(amount.repaid ~ ., data = df_train)
 # plot residual plots
 # Residuals = Observed - Predicted
+# mean of residuals sould be zero
+mean(lm_model$residuals)
+par(mfrow=c(2, 2))
+plot(lm_model)
 # The most useful way to plot the residuals, 
 # is with your predicted values on the x-axis 
 # and your residuals on the y-axis.
@@ -248,7 +283,7 @@ residualVals <- df_test$amount.repaid - predictions
 df.2 <- data.frame(df_test$amount.repaid, predictions, 
                    residualVals)
 colnames(df.2)<- c("observed","predicted","residuals")
-View(df.2)
+
 
 ggplot(data = df.2, aes(x=predicted, y=residuals))+
   geom_point()+
@@ -256,3 +291,11 @@ ggplot(data = df.2, aes(x=predicted, y=residuals))+
   ylab("Residuals")+
   ggtitle("Residual plot")+
   theme_bw()
+
+
+shapiro.test(residuals(lm_model))
+range(df.1$amount.repaid)
+summary(df.1$amount.repaid)
+
+ggplot(data = df.1, aes(x= original.loan.amount, y=amount.repaid))+
+  geom_point()
