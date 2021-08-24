@@ -64,7 +64,6 @@ names(loan_purpose_existing_levels)<- loan_purpose_new_levels
 # now using mutate and fct_recode to recode the factor levels
 df <- df %>%
   mutate(loan_purpose = fct_recode(loan.purpose, !!!loan_purpose_existing_levels))
-levels(df$loan_purpose)
 # drop original variable
 df$loan.purpose<- NULL
 # lets wrap the text to no more than 10 spaces
@@ -114,12 +113,6 @@ df.1<- df.1[, -badCols]
 dim(df.1) #[1] 5223 17
 
 ## Predictive Modeling
-## Recode character variables to nominal
-df.1<- df.1 %>%
-  mutate(across(authority.name:loan_purpose,~as.factor(.))) %>%
-  mutate(across(authority.name:loan_purpose,~factor(.,levels = unique(.)))) %>%
-  mutate(across(authority.name:loan_purpose,~as.numeric(.)))
-
 colnames(df.1)
 ## Assume ``loan.fund.sources` is the response variable `
 ggplot(data = df.1, aes(x=loan.fund.sources))+
@@ -133,6 +126,152 @@ df.2<- df.1 # make copy
 ggplot(data = df.2, aes(x=loan.fund.sources))+
   geom_bar()+
   theme_bw()
+
+# 
+
+# PM on Imbalanced data
+library(xgboost)
+names(df.2)
+
+# Run algorithms using 3-fold cross validation
+set.seed(2021)
+df.2<- df.1
+index <- createDataPartition(df.2$loan.fund.sources, p = 0.7, list = FALSE, times = 1)
+train_data <- df.2[index, ]
+test_data  <- df.2[-index, ]
+
+# xgboost requires data in matrix format
+data_label <- df.2[,"loan.fund.sources"]
+data_matrix <- xgb.DMatrix(data = as.matrix(df.2), label = data_label)
+
+
+numberOfClasses <- length(unique(df.2$loan.fund.sources))
+xgb_params <- list("objective" = "multi:softprob",
+                   "eval_metric" = "mlogloss",
+                   "num_class" = numberOfClasses)
+nround    <- 50 # number of XGBoost rounds
+cv.nfold  <- 5
+# Fit cv.nfold * cv.nround XGB models and save OOF predictions
+cv_model <- xgb.cv(params = xgb_params,
+                   data = train_data, 
+                   nrounds = nround,
+                   nfold = cv.nfold,
+                   verbose = FALSE,
+                   prediction = TRUE)
+
+
+
+
+# create caret trainControl object to control the number of cross-validations performed
+library(rpart.plot)
+names(df.2)
+rpart_model <- rpart(loan.fund.sources~recipient.city+interest.rate+loan.terms.completed+
+                       loanaward_month+loan_purpose+original.loan.amount+loan.length+amount.repaid, 
+                    train_data)
+
+
+
+#　rpart.plot(rpart_model)
+visTree(rpart_model)
+
+
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 3,
+                     # repeated 3 times
+                     repeats = 3, 
+                     verboseIter = FALSE, 
+                     classProbs=FALSE, 
+                     summaryFunction=multiClassSummary
+                     )
+set.seed(2021)
+# turning "warnings" off
+options(warn=-1)
+metric <- "logLoss"
+names(train_data)
+# knn
+m_knn <- train(loan.fund.sources ~., data = train_data[,c(2,4,6:18)], 
+               method="kknn",metric=metric, 
+               trControl=ctrl, preProcess = c("center", "scale"))
+
+
+# Model summary
+models <- resamples(list(logreg = fit_logreg, gbm = fit_gbm, lda = fit_lda))
+summary(models)
+# compare models
+dotplot(models)
+bwplot(models)
+# Make Predictions using the best model
+predictions <- predict(fit_logreg, test_data) # log reg has lowest specificity
+confusionMatrix(predictions, test_data$class) # 98% accuracy, balanced accuracy # 75%
+# Total cost imbalanced training data = 10*55+500*149 = $75,050
+
+
+# PREDICTIVE MODELLING On BALANCED TRAINING DATA
+
+# Method 1: Under Sampling
+# turning "warnings" off
+options(warn=-1)
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 3, repeats = 3,
+                     verboseIter = FALSE,
+                     classProbs=TRUE, 
+                     summaryFunction=twoClassSummary,
+                     sampling = "down")
+# Logistic Regression on under sampled data
+set.seed(2020)
+fit_logreg_under<-train(class ~., data = train_data , 
+                        method='glm', 
+                        trControl=ctrl,  
+                        metric = metric,
+                        preProc = c("center", "scale")
+)
+# Logistic Regression on over sampled data
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 3, repeats = 3,
+                     verboseIter = FALSE,
+                     classProbs=TRUE, 
+                     summaryFunction=twoClassSummary,
+                     sampling = "up"
+)
+set.seed(2020)
+fit_logreg_up<-train(class ~., data = train_data , 
+                     method='glm', 
+                     trControl=ctrl,  
+                     metric = metric,
+                     preProc = c("center", "scale")
+)
+
+# Logistic Regression on random over sampled data
+set.seed(2020)
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 3, repeats = 3,
+                     verboseIter = FALSE,
+                     classProbs=TRUE, 
+                     summaryFunction=twoClassSummary,
+                     sampling = "rose"
+)
+fit_logreg_rose<-train(class ~., data = train_data , 
+                       method='glm', 
+                       trControl=ctrl,  
+                       metric = metric,
+                       preProc = c("center", "scale")
+)
+
+# summarize models built on balanced data
+models <- resamples(list(glm_under=fit_logreg_under, glm_over=fit_logreg_up, glm_rose=fit_logreg_rose))
+summary(models)
+# compare accuracy of models
+dotplot(models)
+bwplot(models)
+
+# Make Predictions using the best model
+predictions <- predict(fit_logreg_up, test_data)
+# Using over-sampling as a method for balancing the data
+confusionMatrix(predictions, test_data$class) # Total cost balanced training data (log reg over sampl)= 10*540+500*33 = $21,900
+
+
+
+
 # 2. split data into train, test split
 # split the train dataset into train and test set
 set.seed(2021)
