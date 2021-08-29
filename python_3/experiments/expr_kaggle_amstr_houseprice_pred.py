@@ -11,6 +11,10 @@ import seaborn as sns
 # read data in global variable
 df = pd.read_csv('../../data/kaggle_amstr_houseprice.csv')
 
+# impute missing values
+
+
+
 def preprocess(data = df):
     
     # describe data
