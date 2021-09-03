@@ -29,23 +29,22 @@ print(df['stream'].value_counts()) # merge CS with IT; merge other stream into e
 # EDA
 # for variable stream create a new variable called faculty
 # create a list of all streams
+# Create dictionaries from keys, merge them and map:
 lst_stream_CS = ['Computer Science', 'Information Technology']
 # lst_stream = list(df['stream'].unique())
 dict1 = dict.fromkeys(lst_stream_CS, 'Computer Science')
 lst_stream_ENG = ['Mechanical', 'Electrical', 'Civil','Electronics And Communication']
 dict2 = dict.fromkeys(lst_stream_ENG, 'Engineering')
-
-# df['faculty'] = df
-
 d = {**dict1, **dict2}
 print(d)
 df['faculty'] = df['stream'].map(d)
 print(df['faculty'].value_counts())
-print(df.head(5))
-
-
-# print(streams_list)
 
 # map target variable tp words
+# change datatype of target variable to categorical
+df['placedornot'] = df['placedornot'].astype('category')
+print(df['placedornot'].dtypes)
+df['placement'] = df['placedornot'].map({'0':'no','1':'yes'})
+print(df['placement'].value_counts())
 
 
