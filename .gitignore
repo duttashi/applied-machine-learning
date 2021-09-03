@@ -21,3 +21,4 @@
 *.csv
 *.tgz
 AML.Rproj
+/plots/*
