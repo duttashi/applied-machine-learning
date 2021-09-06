@@ -40,11 +40,12 @@ print(d)
 df['faculty'] = df['stream'].map(d)
 print(df['faculty'].value_counts())
 
-# map target variable tp words
+# map target variable to words
 # change datatype of target variable to categorical
 df['placedornot'] = df['placedornot'].astype('category')
 print(df['placedornot'].dtypes)
-df['placement'] = df['placedornot'].map({'0':'no','1':'yes'})
+df['placement'] = df['placedornot'].map({0:'no',1:'yes'})
 print(df['placement'].value_counts())
 
+print(df.dtypes)
 
