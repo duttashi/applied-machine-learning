@@ -15,9 +15,11 @@ def connect_mysql():
                 password = input("Enter database password: "),
                 database = "sakila"
                 ) as connection:
-            print(connection)
+            print()
+            
     except Error as err:
         print(err)
+    
     return connection
 
 
@@ -29,7 +31,7 @@ cursor = cnx.cursor()
 
 # execute sql queries
 # cursor.execute("show tables")
-actor_info_query = "select * from actor_info"
+actor_info_query = "select * from actor_info limit 10"
 cursor.execute(actor_info_query)
 result = cursor.fetchall()
 for row in result:
