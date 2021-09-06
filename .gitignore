@@ -22,3 +22,4 @@
 *.tgz
 AML.Rproj
 /plots/*
+*.pbix
