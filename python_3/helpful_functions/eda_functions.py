@@ -13,6 +13,13 @@ import pandas as pd
 import numpy as np
 import random
 
+
+# returns the dataframe name
+def get_df_name(df):
+    name =[x for x in globals() if globals()[x] is df][0]
+    return name
+
+# returns 
 def data_with_missing_vals():
     df = pd.DataFrame(np.random.randn(5, 3),
                       index=['a', 'b', 'c', 'd', 'e'],
@@ -27,6 +34,7 @@ def data_with_missing_vals():
 def print_data_head(train_data):
     return train_data.head(5)
 
+# prints a list of null columns
 def find_null_columns(train_data):
     
     list_of_nullcolumns =[]
@@ -60,3 +68,20 @@ def missing_data_plot(data_na):
     # plt.show()
     # use return plt if the function is returning a plot
     return fig
+
+# replace blank with nan
+def replace_missing(dataframe):
+    dataframe = dataframe.replace(r'^\s*$', np.nan, regex=True)
+    return dataframe
+
+def fill_missing(dataframe):
+    df_imputed = replace_missing(dataframe)
+    for col in df_imputed.columns:
+        if(df_imputed[col].dtype == 'object'):
+            df_imputed[col] = df_imputed[col].fillna(df_imputed[col].mode()[0])
+        elif (df_imputed[col].dtype == 'int64'):
+            df_imputed[col] = df_imputed[col].fillna(df_imputed[col].median()[0])
+        else:
+            continue
+    # return imputed dataframe
+    return df_imputed
