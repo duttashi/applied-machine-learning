@@ -7,11 +7,14 @@ Note: Python function names as defined in PEP 8 https://www.python.org/dev/peps/
 Reference: https://www.kaggle.com/gcspkmdr/cross-sell-cv-trees?scriptVersionId=43084700
 """
 # import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns 
 import pandas as pd
 import numpy as np
 import random
+import nltk
+from nltk.tokenize import RegexpTokenizer
+from nltk.stem import WordNetLemmatizer,PorterStemmer
+from nltk.corpus import stopwords
+import re
 
 
 # returns the dataframe name
@@ -60,14 +63,14 @@ def missing_data_percentage(data):
     
     return data_na
 
-def missing_data_plot(data_na):
-    x = data_na
-    fig = plt.figure(figsize=(8, 6))
-    plt.plot(x)
-    # use plt.show() when the function is not returning a value
-    # plt.show()
-    # use return plt if the function is returning a plot
-    return fig
+# def missing_data_plot(data_na):
+#     x = data_na
+#     fig = plt.figure(figsize=(8, 6))
+#     plt.plot(x)
+#     # use plt.show() when the function is not returning a value
+#     # plt.show()
+#     # use return plt if the function is returning a plot
+#     return fig
 
 # replace blank with nan
 def replace_missing(dataframe):
@@ -85,3 +88,20 @@ def fill_missing(dataframe):
             continue
     # return imputed dataframe
     return df_imputed
+
+def preprocess(sentence):
+    lemmatizer = WordNetLemmatizer()
+    stemmer = PorterStemmer() 
+    sentence=str(sentence)
+    sentence = sentence.lower()
+    sentence=sentence.replace('{html}',"") 
+    cleanr = re.compile('<.*?>')
+    cleantext = re.sub(cleanr, '', sentence)
+    rem_url=re.sub(r'http\S+', '',cleantext)
+    rem_num = re.sub('[0-9]+', '', rem_url)
+    tokenizer = RegexpTokenizer(r'\w+')
+    tokens = tokenizer.tokenize(rem_num)  
+    filtered_words = [w for w in tokens if len(w) > 2 if not w in stopwords.words('english')]
+    stem_words=[stemmer.stem(w) for w in filtered_words]
+    lemma_words=[lemmatizer.lemmatize(w) for w in stem_words]
+    return " ".join(filtered_words)
