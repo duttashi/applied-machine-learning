@@ -6,33 +6,35 @@ reference: https://www.kaggle.com/ruchi798/covid-19-impact-on-digital-learning-e
 import pandas as pd
 import glob
 import numpy as np
-# import glob
+
 # read data
 df_products = pd.read_csv("../../data/learnplatform-covid19-impact-on-digital-learning/products_info.csv")
 print(df_products.shape)
 df_districts = pd.read_csv("../../data/learnplatform-covid19-impact-on-digital-learning/districts_info.csv")
 print(df_districts.shape)
 
-#reading multiple files from a folder into a list
-path = '../../data/learnplatform-covid19-impact-on-digital-learning/engagement_data' 
-all_files = glob.glob(path + "/*.csv")
 
-li = []
+#### START: BELOW CODE HIDDEN 
+# #reading multiple files from a folder into a list
+# path = '../../data/learnplatform-covid19-impact-on-digital-learning/engagement_data' 
+# all_files = glob.glob(path + "/*.csv")
 
-for filename in all_files:
-    df = pd.read_csv(filename, index_col=None, header=0)
-    district_id = filename.split("/")[4].split(".")[0]
-    df["district_id"] = district_id
-    li.append(df)
+# li = []
+
+# for filename in all_files:
+#     df = pd.read_csv(filename, index_col=None, header=0)
+#     district_id = filename.split("/")[4].split(".")[0]
+#     df["district_id"] = district_id
+#     li.append(df)
     
-df_engagement = pd.concat(li)
-df_engagement = df_engagement.reset_index(drop=True)
-print(df_engagement.shape)
+# df_engagement = pd.concat(li)
+# df_engagement = df_engagement.reset_index(drop=True)
+# print(df_engagement.shape)
 
-# write to disk
-path = '../../data/learnplatform-covid19-impact-on-digital-learning/'
-df_engagement.to_csv(path+'engagement_combine.csv')
-print(df_engagement.close())
+# # write to disk
+# path = '../../data/learnplatform-covid19-impact-on-digital-learning/'
+# df_engagement.to_csv(path+'engagement_combine.csv')
+
 
 # read the engagement data from disc
 path = '../../data/learnplatform-covid19-impact-on-digital-learning/'
@@ -96,19 +98,19 @@ print("missing products data", missdata)
 df1 = replace_blanks(df_districts)
 df_clean = fill_missing(df1)
 # write clean data to disk
-df_clean.to_csv(path+'clean_district.csv', sep=",")
+df_clean.to_csv(path+'clean_district.csv', sep=",", index=False)
 print(df_clean.isnull().sum())
 
 df1 = replace_blanks(df_products)
 df_clean = fill_missing(df1)
 # write clean data to disk
-df_clean.to_csv(path+'clean_products.csv', sep=",")
+df_clean.to_csv(path+'clean_products.csv', sep=",", index=False)
 print(df_clean.isnull().sum())
 
 df1 = replace_blanks(df_engagement)
 df_clean = fill_missing(df1)
 # write clean data to disk
-df_clean.to_csv(path+'clean_engage.csv', sep=",")
+df_clean.to_csv(path+'clean_engage.csv', sep=",", index=False)
 print(df_clean.isnull().sum())
 
 
