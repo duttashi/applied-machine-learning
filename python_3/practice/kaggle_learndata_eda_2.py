@@ -17,6 +17,14 @@ df_products.columns = [x.lower() for x in df_products.columns]
 df_districts.columns = [x.lower() for x in df_districts.columns]
 df_engage.columns = [x.lower() for x in df_engage.columns]
 
+# rename cols for product
+df_products = df_products.rename(columns={'lp id':'lp_id',
+                            'product name':'prod_name',
+                            'provider/company name':'company_name',
+                            'sector(s)':'sector',
+                            'primary essential function':'prim_funct'}
+                   )
+
 # show dataframe columns
 print("products columns\n", df_products.columns,
       "\ndistrict columns\n", df_districts.columns,
@@ -132,15 +140,31 @@ df_districts.to_csv("../../data/learnplatform-covid19-impact-on-digital-learning
 
 # Only consider districts and products with full engagement data
 df_districts_new = df_districts[df_districts.district_id.isin(df_engage.district_id.unique())].reset_index(drop=True)
-df_products_new = df_products[df_products['lp id'].isin(df_engage.lp_id.unique())].reset_index(drop=True)
+df_products_new = df_products[df_products['lp_id'].isin(df_engage.lp_id.unique())].reset_index(drop=True)
 
 print("Original data shape\n")
 print(df_products.shape, df_districts.shape)
 print("\nNew data shape")
 print(df_products_new.shape, df_districts_new.shape)
 
+### Merge engage with products data on lp id
+df_prod_engage = df_products.merge(df_engage, on = 'lp_id',
+                                       how = 'inner')
+print("\nEngage data shape: ", df_engage.shape)
+print("\nProducts data shape: ", df_products.shape)
+print("\nProduct- Enagage matches", df_prod_engage.shape)
+print("\nProduct- Enagage variables", df_prod_engage.columns)
 
+# write to disk
+df_prod_engage.to_csv("../../data/learnplatform-covid19-impact-on-digital-learning/prod_engage_join_clean.csv", sep=",")
+# merge product-engage data with districts data on district_id
 
+# df_prod_engage_dist = df_prod_engage.merge(df_districts, on = 'district_id',
+#                                            how='inner')
+# print("\nProduct Engage District data shape & variables\n",
+#       df_prod_engage_dist.shape, df_prod_engage_dist.columns)
+
+print(df_prod_engage.dtypes)
 
 # Districts file
 # print("\n##### Districts#####")
