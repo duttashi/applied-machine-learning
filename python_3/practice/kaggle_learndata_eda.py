@@ -16,16 +16,32 @@ print(df_districts.shape)
 
 #### Clean districts dataframe
 
+def preprocess(dataframe):
+    print("##### Dataframe datatypes ####")
+    print(dataframe.dtypes)
+    for col in dataframe.columns:
+        if (dataframe[col].dtype == 'object'):
+            dataframe[col] = dataframe[col].str.replace("\[","", regex=True)
+            dataframe[col] = dataframe[col].str.replace("^\d","", regex=True)
+            dataframe[col] = dataframe[col].str.replace("\,","", regex=True)
+        else:
+            continue
+    
+    return dataframe
+    
+df1 = preprocess(df_districts)
+print(df1.head(3))
+
 # replace '[' with space
 # print(df_districts.dtypes)
-df_distid = df_districts['district_id']
-df_districts = df_districts.drop('district_id',axis=1)
-df_districts = df_districts.apply(lambda x: x.str[6:])
-df_districts = df_districts.apply(lambda x: x.str.replace("\[","", regex=True))
-df_districts = df_districts.apply(lambda x: x.str.replace("\,","", regex=True))
+# df_distid = df_districts['district_id']
+# df_districts = df_districts.drop('district_id',axis=1)
+# df_districts = df_districts.apply(lambda x: x.str.replace("\[\d\,","", regex=True))
+# df_districts = df_districts.apply(lambda x: x.str.replace("\d","", regex=True))
+# df_districts = df_districts.apply(lambda x: x.str.replace("\,","", regex=True))
 
 # add the district id column back to dataframe
-df_districts['district_id']=df_distid
+# df_districts['district_id']=df_distid
 # df_districts['pct_black/hispanic'] = df_districts['pct_black/hispanic'].replace(r"\[\D+\,","", regex=True)
 # df_districts['pct_black/hispanic'] = df_districts['pct_black/hispanic'].str.replace("\[","", regex=True)
 
@@ -38,10 +54,10 @@ df_districts['district_id']=df_distid
 # df_districts['pct_free/reduced'] = df_districts['pct_free/reduced'].str.replace("^\d*,","", regex=True)
 # df_districts['county_connections_ratio'] = df_districts['county_connections_ratio'].str.replace("^\d*,","", regex=True)
 # df_districts['pp_total_raw'] = df_districts['pp_total_raw'].str.replace("^\d*,","", regex=True)
-print(df_districts['pct_black/hispanic'].head(3))
-print(df_districts['pct_free/reduced'].head(3))
-print(df_districts['county_connections_ratio'].head(3))
-print(df_districts['pp_total_raw'].head(3))
+# print(df_districts['pct_black/hispanic'].head(3))
+# print(df_districts['pct_free/reduced'].head(3))
+# print(df_districts['county_connections_ratio'].head(3))
+# print(df_districts['pp_total_raw'].head(3))
 
 #### START: BELOW CODE HIDDEN 
 # #reading multiple files from a folder into a list
