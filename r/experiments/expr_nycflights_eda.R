@@ -27,6 +27,11 @@ colnames(df)
 
 df %>%
   filter(!is.na(arr_delay) & !is.na(dep_delay)) %>%
-  group_by(flight_time, dest) %>%
-  summarise(carrier_count = n_distinct(carrier)) %>%
-  ggplot(aes(x=carrier_count))+ geom_bar()
+  group_by(origin,dest) %>%
+  summarise(cnt = n()) %>%
+  filter(cnt > 2000) %>%
+  ggplot(aes(reorder(x=dest, -cnt, FUN=min), cnt))+ geom_point()+
+  labs(x="flight destination", y="Frequency")+
+  coord_flip()+
+  theme_bw()
+
