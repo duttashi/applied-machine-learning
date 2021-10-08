@@ -1,5 +1,6 @@
 ### Common data tansformation tasks in Python and R
 
 |S.No.|Task|Python|R|
-|---|---|---|---|---|
+| - | :- | :-: | -: |
 |1.|Get a list of categories for categorical variable|[code](https://github.com/duttashi/applied-machine-learning/blob/master/python_3/experiments/expr_get_unique_factor_level.py)|[code](https://github.com/duttashi/applied-machine-learning/blob/master/r/experiments/expr_get_unique_factor_level.R)|
+|2.|Encoding categorical variables|[code]()|[code]()|
