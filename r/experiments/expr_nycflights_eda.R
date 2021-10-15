@@ -35,3 +35,13 @@ df %>%
   coord_flip()+
   theme_bw()
 
+# more exercises
+colnames(df)
+
+df %>%
+  filter(month==1, day==1, dep_delay>0)
+
+df %>%
+  arrange(year,month, day, sched_dep_time,carrier, flight) %>%
+  mutate(flight_id = row_number()) %>%
+  glimpse()
