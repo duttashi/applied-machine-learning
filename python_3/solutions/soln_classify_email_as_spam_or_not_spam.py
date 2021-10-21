@@ -4,6 +4,9 @@ Question: How to classify a new email as spam/not spam?
 Background: Given a text email content, classify it as spam or not spam.
 For example, given an email text like, "Hi, I am Andrew and I want too buy VIAGRA"
 Then the program should classify it as SPAM
+SPAM = 1
+Not SPAM = 0
+
 @author: Ashish
 """
 import string
@@ -33,7 +36,7 @@ df = pd.DataFrame(data={'Email': [
 # show the dataframe
 #print(df)
 
-def fun(text):    
+def clean_email_content(text):    
     # Removing Punctuations
     remove_punc = [c for c in text if c not in string.punctuation]
     remove_punc = ''.join(remove_punc)
@@ -44,16 +47,22 @@ def fun(text):
     return cleaned
 
 # Create a vectorizer object to enable both fit_transform and just transform
-vectorizer = CountVectorizer(analyzer=fun)
+vectorizer = CountVectorizer(analyzer=clean_email_content)
 X = vectorizer.fit_transform(df['Email'])
 
+# split data set
 X_train, X_test, y_train, y_test = train_test_split(X, df['Spam'], test_size = 0.25, random_state = 0)
 
+# invoke classfier model
 classifier = MultinomialNB()
+
+# train classifer model on training data
 classifier.fit(X_train, y_train)
 
+# using trained classifier model on test data
 pred = classifier.predict(X_test)
 
+# report trained classifier model results on test data
 print(classification_report(y_test ,pred ))
 print('Confusion Matrix: \n', confusion_matrix(y_test,pred))
 print()
@@ -64,21 +73,9 @@ print('Accuracy: ', accuracy_score(y_test,pred))
 new_email = "Hi, my name is Christopher and I like VIAGRA"
 
 # Apply the same preprocessing steps and transformation
-X_new = vectorizer.transform([fun(new_email)])
+X_new = vectorizer.transform([clean_email_content(new_email)])
 
 # Predict new email with already trained classifier
 preds = classifier.predict(X_new)
 print(preds)
 
-# Assign predicted accuracy to a label and assign it to a dataframe as a column
-if (preds > .6):
-    pred_label = "spam"
-else:
-    pred_label = "not spam"
-
-y_test['pred_label'] = pred_label
-df_out = pd.merge(df, y_test[['pred_label']],
-                  how='left', left_index=True,
-                  right_index=True)
-print(df_out)
-df.to_csv("tempdf.csv", index=False)
