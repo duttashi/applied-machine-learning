@@ -43,6 +43,9 @@ uber['Return'].plot(figsize=(20,8))
 # Absolute change in successive rows
 uber.High.diff().plot(figsize=(20,6))
 
+# plotting before normalisation
+
+
 print(uber.shape,"\n",uber.head)
   
 
