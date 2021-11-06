@@ -38,6 +38,7 @@ df_final <- inner_join(x=df_ccsdiag, y= df_pres, by= "patient_id")
 
 # separate date into year,month format
 df<- df_final
+str(df)
 # df<- df %>%
 #   mutate(diags_date = ymd(diag_date),
 #          diag_month = month(diags_date),
@@ -115,36 +116,43 @@ df<- df_final
 # df<- df_final
 colnames(df)
 str(df)
+# convert char dates to date
+df$diag_date<- ymd(df$diag_date)
+df$prescription_date<- ymd(df$prescription_date)
 # convert date vars to date type
-df<- mutate_at(df, vars(starts_with("diag_")), funs(ymd))
+# df<- mutate_at(df, vars(starts_with("diag_")), funs(ymd))
+# df<- mutate_at(df, vars(starts_with("prescription_")), funs(ymd))
 range(df$diag_date) # year range 2015-2018
 range(df$prescription_date) # year range 2013-2018
 # Filter and keep data for diags & prescrp year range 2015-2018
 df_2k15 <- df %>%
   filter(prescription_date>= "2015-02-01")
-range(df_2k15$diag_date)
-range(df_2k15$prescription_date)
+
 # rearrange vars
 df_2k15<- df_2k15[,c(1,3:7,9:11,2,8)]
 colnames(df_2k15)
 
-df1<-df_2k15 %>%
+df_2k15<-df_2k15 %>%
   group_by(patient_id, icd10) %>%
   #summarise(count = n_distinct(diag_date))
   mutate(diag_date_count = n_distinct(diag_date))%>%
   mutate(pres_date_count = n_distinct(prescription_date)) %>%
   arrange(desc(diag_date_count))
 
-df1 %>%
-  group_by(diag_date_count, pres_date_count) %>%
-  summarise(cnt = n()) %>%
-  arrange(cnt) %>%
-  ggplot(aes(reorder(x= icd10, -cnt, FUN=min), cnt))+
-  geom_point(size=4)+
-  labs(x="prescription month", y="Frequency",
-       title = "Which months have high prescriptions?")+
-  coord_flip()+
-  theme_bw()
+### NOW RESHAPE WIDE DATA TO LONG FORMAT
+# https://stackoverflow.com/questions/12466493/reshaping-multiple-sets-of-measurement-columns-wide-format-into-single-columns
+# x<- data.frame(V1 = names(df_2k15), V2=unname(t(df_2k15)))
+# head(x)
+# df_2k15 %>%
+#   group_by(icd10) %>%
+#   summarise(cnt = n()) %>%
+#   arrange(cnt) %>%
+#   ggplot(aes(reorder(x= icd10, -cnt, FUN=min), cnt))+
+#   geom_point(size=4)+
+#   labs(x="prescription month", y="Frequency",
+#        title = "Which months have high prescriptions?")+
+#   coord_flip()+
+#   theme_bw()
 
 # Q2. 
 
@@ -232,3 +240,33 @@ df_pres %>%
 # df1$drug_category<- as.factor(as.numeric(factor(df1$drug_category)))
 # df1$drug_group<- as.factor(as.numeric(factor(df1$drug_group)))
 # df1$drug_class<- as.factor(as.numeric(factor(df1$drug_class)))
+
+### 19/Sep
+range(df_pres$prescription_date)
+ggplot(data = df_pres, aes(x=prescription_date, y= drug_class))+
+  geom_bar(stat = "identity")
+
+df<- df_pres
+colnames(df)
+table(df$pres_year, df$pres_month)
+# filter out incomplete data only
+df<- df %>%
+  filter(pres_year>2013 & pres_year<2018)
+
+# 
+patient_high_prescr_count <- df %>%
+  count(patient_id, drug_category) %>%
+  arrange(desc(n)) %>%
+  group_by(drug_category) %>%
+  slice(seq_len(3))
+
+high_pres_year <- df %>%
+  count(patient_id, pres_year) %>%
+  arrange(desc(n))
+  
+
+# Plots
+p<- ggplot(data = df, aes(x=pres_year))
+p + geom_bar()+
+  theme_bw()
+colnames(df)
